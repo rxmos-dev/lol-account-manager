@@ -1,0 +1,123 @@
+import React, { useState, useRef, useEffect } from "react";
+import { HiMoon, HiSun } from "react-icons/hi";
+import { useTheme } from "./contexts/ThemeContext";
+import { SiLeagueoflegends } from "react-icons/si";
+import { PiGearBold } from "react-icons/pi";
+import { IoMdClose } from "react-icons/io";
+import { GiHeartTower } from "react-icons/gi";
+import { BiHeart } from "react-icons/bi";
+import { BsFillHeartFill, BsTranslate } from "react-icons/bs";
+import { HiChevronDown } from "react-icons/hi";
+
+const { ipcRenderer } = window.require("electron");
+
+const Navbar = () => {
+  const { theme, toggleTheme } = useTheme();
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState("Português");
+  const languageMenuRef = useRef(null);
+
+  const handleCloseApp = async () => {
+    try {
+      await ipcRenderer.invoke("close-app");
+    } catch (error) {
+      console.error("Erro ao fechar aplicação:", error);
+    }
+  };
+
+  const toggleLanguageMenu = () => {
+    setIsLanguageMenuOpen(!isLanguageMenuOpen);
+  };
+
+  const handleLanguageSelect = (language) => {
+    setSelectedLanguage(language);
+    setIsLanguageMenuOpen(false);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (languageMenuRef.current && !languageMenuRef.current.contains(event.target)) {
+        setIsLanguageMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <nav className="bg-secondary p-3 border-b border-border shadow-sm justify-between flex items-center drag-region">
+      <div className="flex font-semibold items-center text-foreground gap-2 text-sm">
+        <SiLeagueoflegends />
+        <p>ACCOUNT MANAGER</p>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 no-drag">
+        <button className="flex shadow-sm items-center text-foreground gap-2 bg-sidebar hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors animate-pulse">
+          <BsFillHeartFill className="w-3 h-3 text-red-500" />
+          <p className="text-xs font-bold">DONATE</p>
+        </button>
+
+        <div
+          className="relative"
+          ref={languageMenuRef}
+        >
+          <button
+            onClick={toggleLanguageMenu}
+            className="flex shadow-sm items-center text-foreground gap-2 bg-sidebar hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
+          >
+            <BsTranslate className="w-3 h-3" />
+            <HiChevronDown className={`w-3 h-3 transition-transform ${isLanguageMenuOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {isLanguageMenuOpen && (
+            <div className="absolute top-full right-0 mt-1 bg-sidebar border border-border rounded-md shadow-lg py-1 z-50 min-w-[120px]">
+              <button
+                onClick={() => handleLanguageSelect("English")}
+                className={`flex flex-row gap-1 items-center w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors ${
+                  selectedLanguage === "English" ? "text-blue-500" : "text-foreground"
+                }`}
+              >
+                English
+                <p className="text-[9px] opacity-40">[en_US]</p>
+              </button>
+              <button
+                onClick={() => handleLanguageSelect("Português")}
+                className={`flex flex-row gap-1 items-center w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors ${
+                  selectedLanguage === "Português" ? "text-blue-500" : "text-foreground"
+                }`}
+              >
+                Português
+                <p className="text-[9px] opacity-40">[pt_BR]</p>
+              </button>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={toggleTheme}
+          className="flex shadow-sm items-center text-foreground gap-2 bg-sidebar hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
+          title={`Alternar para modo ${theme === "dark" ? "claro" : "escuro"}`}
+        >
+          {theme === "dark" ? <HiSun className="w-3 h-3" /> : <HiMoon className="w-3 h-3" />}
+        </button>
+
+        <button className="flex shadow-sm items-center text-foreground gap-2 bg-sidebar hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors">
+          <PiGearBold className="w-3 h-3" />
+        </button>
+
+        <button
+          onClick={handleCloseApp}
+          className="ml-3 flex shadow-sm items-center text-foreground gap-2  p-2 hover:cursor-pointer hover:bg-red-600 rounded-md transition-all"
+        >
+          <IoMdClose className="w-3 h-3" />
+        </button>
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
