@@ -192,6 +192,19 @@ export const calculateMasteryWinrate = (championPoints: number): number => {
   return Math.floor(Math.random() * 20) + 60; // 60-80%
 };
 
+// Função para formatar o nome da role
+export const formatRoleName = (role: string): string => {
+  const roleMap: { [key: string]: string } = {
+    "TOP": "TOP",
+    "JUNGLE": "JNG", 
+    "MIDDLE": "MID",
+    "BOTTOM": "ADC",
+    "UTILITY": "SUP"
+  };
+  
+  return roleMap[role] || role;
+};
+
 // Função para formatar dados de elo
 export const formatEloData = (eloData: any) => {
   if (!eloData || !eloData.elo || eloData.elo.length === 0) {

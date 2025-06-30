@@ -1,6 +1,6 @@
 import React from "react";
 import { AccountData } from "../utils/accountsManager";
-import { formatEloData, getTierBorderColor, getChampionIcon, calculateMasteryWinrate } from "../App";
+import { formatEloData, getTierBorderColor, getChampionIcon, calculateMasteryWinrate, formatRoleName } from "../App";
 
 interface GridCardProps {
   account: AccountData;
@@ -37,7 +37,7 @@ const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, 
     </div>
 
     <div className="flex flex-row items-center justify-center gap-2 mt-4">
-      <p className="text-xs">MID</p>
+      <p className="text-xs">{account.summonerLaneData?.mainRole ? formatRoleName(account.summonerLaneData.mainRole) : "FILL"}</p>
     </div>
 
     <div className="flex flex-row items-center justify-center gap-2 mt-4">

@@ -1,6 +1,6 @@
 import React from "react";
 import { AccountData } from "../utils/accountsManager";
-import { formatEloData, getTierBorderColor, getChampionIcon, calculateMasteryWinrate } from "../App";
+import { formatEloData, getTierBorderColor, getChampionIcon, calculateMasteryWinrate, formatRoleName } from "../App";
 
 interface ListCardProps {
   account: AccountData;
@@ -42,7 +42,9 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] opacity-30 uppercase tracking-wide">MAIN ROLE</span>
-              <span className="text-sm font-semibold">MID</span>
+              <span className="text-sm font-semibold">
+                {account.summonerLaneData?.mainRole ? formatRoleName(account.summonerLaneData.mainRole) : "FILL"}
+              </span>
             </div>
           </div>
         </div>
@@ -60,11 +62,9 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
                     alt={`Champion ${mastery.championId}`}
                     className="w-10 h-10 rounded-lg shadow-sm"
                     onError={(e) => {
-                      // Fallback para Ahri se o ícone não carregar
                       (e.target as HTMLImageElement).src = ahriIcon || "";
                     }}
                   />
-                  <span className="font-bold text-green-400">M{mastery.championLevel}</span>
                 </div>
               ))
             ) : (

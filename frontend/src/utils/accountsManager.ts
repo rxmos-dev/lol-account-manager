@@ -7,6 +7,18 @@ interface ChampionMastery {
   lastPlayTime: number;
 }
 
+interface SummonerLaneData {
+  mainRole: string;
+  roleStatistics: {
+    [key: string]: {
+      matches: number;
+      percentage: number;
+    };
+  };
+  totalMatches: number;
+  analysisNote: string;
+}
+
 interface AccountData {
   region: string;
   username: string;
@@ -16,6 +28,7 @@ interface AccountData {
   puuid?: string; // Adicionando campo opcional para PUUID
   eloData?: any; // Adicionando campo opcional para dados de elo
   championMasteriesData?: ChampionMastery[]; // Adicionando campo opcional para maestrias de campeões
+  summonerLaneData?: SummonerLaneData; // Adicionando campo opcional para dados de lane principal
 }
 
 // Verifica se estamos em ambiente Electron
@@ -95,6 +108,10 @@ export const updateAccountsWithPuuids = async (accounts: AccountData[]): Promise
       const championMasteriesData = await fetchChampionMasteries(account.summonerName, account.tagline);
       updatedAccount.championMasteriesData = championMasteriesData;
       
+      // Busca dados da lane principal
+      const summonerLaneData = await fetchSummonerLane(account.summonerName, account.tagline);
+      updatedAccount.summonerLaneData = summonerLaneData;
+      
       return updatedAccount;
     })
   );
@@ -132,6 +149,21 @@ export const fetchChampionMasteries = async (summonerName: string, tagline: stri
   }
 };
 
+// Função para buscar dados da lane principal via API hospedada
+export const fetchSummonerLane = async (summonerName: string, tagline: string): Promise<SummonerLaneData | null> => {
+  try {
+    const response = await axios.post('https://api-lol-account-manager.vercel.app/api/v1/summoner-lane', {
+      summonerName,
+      tagline
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar dados da lane principal:', error);
+    return null;
+  }
+};
+
 // Função para deletar uma conta
 export const deleteAccount = async (accountToDelete: AccountData): Promise<boolean> => {
   try {
@@ -149,4 +181,4 @@ export const deleteAccount = async (accountToDelete: AccountData): Promise<boole
   }
 };
 
-export type { AccountData, ChampionMastery };
+export type { AccountData, ChampionMastery, SummonerLaneData };
