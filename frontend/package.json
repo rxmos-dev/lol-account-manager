@@ -1,7 +1,9 @@
 {
   "name": "desktop-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "LoL Account Manager",
+  "author": "@yurirxmos",
   "type": "module",
   "main": "main.js",
   "scripts": {
@@ -18,6 +20,7 @@
     "@tailwindcss/vite": "^4.1.10",
     "axios": "^1.10.0",
     "crypto-js": "^4.2.0",
+    "electron-updater": "^6.3.9",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
@@ -30,7 +33,7 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.5.2",
     "concurrently": "^9.2.0",
-    "electron": "^37.1.0",
+    "electron": "37.1.0",
     "electron-builder": "^25.1.7",
     "eslint": "^9.29.0",
     "eslint-plugin-react-hooks": "^5.2.0",
@@ -40,30 +43,44 @@
     "wait-on": "^8.0.3"
   },
   "build": {
-    "appId": "com.lol-account-manager.app",
+    "appId": "com.yurirxmos.lol-account-manager",
     "productName": "LoL Account Manager",
     "directories": {
-      "output": "dist-electron"
+      "output": "release"
     },
     "files": [
       "dist/**/*",
       "main.js",
       "package.json"
     ],
+    "extraResources": [
+      {
+        "from": "public",
+        "to": "public",
+        "filter": ["**/*"]
+      }
+    ],
     "win": {
       "target": "nsis",
-      "icon": "public/riot.svg"
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "deleteAppDataOnUninstall": true
+      "deleteAppDataOnUninstall": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "LoL Account Manager",
+      "include": "build/installer.nsh"
     },
     "publish": {
       "provider": "github",
       "owner": "yurirxmos",
       "repo": "lol-account-manager",
-      "private": false
-    }
+      "private": false,
+      "releaseType": "release"
+    },
+    "compression": "maximum"
   }
 }
