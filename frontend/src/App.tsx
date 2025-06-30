@@ -4,13 +4,14 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { BiPlus, BiPlusCircle } from "react-icons/bi";
 import AddAccountModal from "./components/AddAccountModal";
 import AccountDetailsModal from "./components/AccountDetailsModal";
-import { saveAccounts, loadAccounts, AccountData } from "./utils/accountsManager";
+import { saveAccounts, loadAccounts, AccountData, updateAccountsWithPuuids } from "./utils/accountsManager";
 
 function App(): React.JSX.Element {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<AccountData | null>(null);
   const [accounts, setAccounts] = useState<AccountData[]>([]);
+  const [isLoadingPuuids, setIsLoadingPuuids] = useState(false);
   const [ahriIcon, setAhriIcon] = useState<string | null>(null);
 
   // Carrega as contas na inicialização
@@ -18,6 +19,16 @@ function App(): React.JSX.Element {
     const initAccounts = async () => {
       const loadedAccounts = await loadAccounts();
       setAccounts(loadedAccounts);
+      
+      // Busca PUUIDs para contas que não possuem
+      if (loadedAccounts.length > 0) {
+        setIsLoadingPuuids(true);
+        const accountsWithPuuids = await updateAccountsWithPuuids(loadedAccounts);
+        setAccounts(accountsWithPuuids);
+        // Salva as contas atualizadas com PUUIDs
+        await saveAccounts(accountsWithPuuids);
+        setIsLoadingPuuids(false);
+      }
     };
     initAccounts();
   }, []);
@@ -39,8 +50,14 @@ function App(): React.JSX.Element {
     }
   }, [accounts]);
 
-  const handleAddAccount = (accountData: AccountData) => {
-    setAccounts((prev) => [...prev, accountData]);
+  const handleAddAccount = async (accountData: AccountData) => {
+    // Busca o PUUID para a nova conta
+    setIsLoadingPuuids(true);
+    const accountsWithNewAccount = [...accounts, accountData];
+    const updatedAccounts = await updateAccountsWithPuuids(accountsWithNewAccount);
+    setAccounts(updatedAccounts);
+    await saveAccounts(updatedAccounts);
+    setIsLoadingPuuids(false);
     console.log("Account added:", accountData);
   };
 
@@ -81,6 +98,12 @@ function App(): React.JSX.Element {
                     <div className="flex flex-col items-center text-sm font-semibold text-primary">
                       {account.summonerName}
                       <p className="opacity-30 text-xs font-normal">#{account.tagline}</p>
+                      {isLoadingPuuids && !account.puuid && (
+                        <p className="text-xs text-blue-400 animate-pulse">Loading PUUID...</p>
+                      )}
+                      {account.puuid && (
+                        <p className="text-xs text-green-400">✓ PUUID</p>
+                      )}
                     </div>
 
                     <div className="flex flex-row items-center justify-center gap-2 mt-4">
