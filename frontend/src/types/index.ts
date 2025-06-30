@@ -66,3 +66,16 @@ export interface ChampionData {
   name: string;
   id: string;
 }
+
+export interface UpdateInfo {
+  version: string;
+  releaseDate: string;
+  releaseNotes?: string;
+}
+
+export interface UpdateStatus {
+  isUpdateAvailable: boolean;
+  isUpdateDownloaded: boolean;
+  updateInfo?: UpdateInfo;
+  downloadProgress?: number;
+}

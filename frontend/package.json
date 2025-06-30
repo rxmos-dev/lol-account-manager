@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "electron": "electron .",
     "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-    "dist": "npm run build && electron-builder"
+    "dist": "npm run build && electron-builder",
+    "publish": "npm run build && electron-builder --publish=always"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.10",
@@ -30,11 +31,39 @@
     "@vitejs/plugin-react": "^4.5.2",
     "concurrently": "^9.2.0",
     "electron": "^37.1.0",
+    "electron-builder": "^25.1.7",
     "eslint": "^9.29.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.2.0",
     "vite": "^7.0.0",
     "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.lol-account-manager.app",
+    "productName": "LoL Account Manager",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/riot.svg"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "yurirxmos",
+      "repo": "lol-account-manager",
+      "private": false
+    }
   }
 }

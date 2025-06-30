@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BiCheck, BiX, BiFolder, BiRefresh, BiPlay } from "react-icons/bi";
+import { BiCheck, BiX, BiFolder, BiRefresh, BiPlay, BiDownload } from "react-icons/bi";
 import { BsInfoCircleFill } from "react-icons/bs";
 import { PiGearBold } from "react-icons/pi";
 
@@ -12,12 +12,62 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [accountsPath, setAccountsPath] = useState("");
   const [leaguePath, setLeaguePath] = useState("");
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(false);
+  
+  // Auto-updater states
+  const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
+  const [isUpdateDownloaded, setIsUpdateDownloaded] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       // Carrega o caminho atual do arquivo de contas
       loadCurrentPath();
       loadLeaguePath();
+      
+      // Setup auto-updater event listeners
+      try {
+        const { ipcRenderer } = window.require("electron");
+        
+        const handleUpdateAvailable = () => {
+          setIsUpdateAvailable(true);
+        };
+
+        const handleUpdateNotAvailable = () => {
+          setIsUpdateAvailable(false);
+        };
+
+        const handleDownloadProgress = (event: any, progress: any) => {
+          setDownloadProgress(progress.percent);
+        };
+
+        const handleUpdateDownloaded = () => {
+          setIsUpdateDownloaded(true);
+        };
+
+        const handleUpdaterError = (event: any, error: any) => {
+          setUpdateError(error.message || 'Erro no auto-updater');
+        };
+
+        // Register listeners
+        ipcRenderer.on('update-available', handleUpdateAvailable);
+        ipcRenderer.on('update-not-available', handleUpdateNotAvailable);
+        ipcRenderer.on('download-progress', handleDownloadProgress);
+        ipcRenderer.on('update-downloaded', handleUpdateDownloaded);
+        ipcRenderer.on('updater-error', handleUpdaterError);
+
+        // Cleanup function
+        return () => {
+          ipcRenderer.removeListener('update-available', handleUpdateAvailable);
+          ipcRenderer.removeListener('update-not-available', handleUpdateNotAvailable);
+          ipcRenderer.removeListener('download-progress', handleDownloadProgress);
+          ipcRenderer.removeListener('update-downloaded', handleUpdateDownloaded);
+          ipcRenderer.removeListener('updater-error', handleUpdaterError);
+        };
+      } catch (error) {
+        console.error("Erro ao configurar listeners do updater:", error);
+      }
     }
   }, [isOpen]);
 
@@ -101,6 +151,46 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     } catch (error) {
       console.error("Erro ao salvar configurações:", error);
       alert("Erro ao salvar configurações");
+    }
+  };
+
+  const handleCheckForUpdates = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateError(null);
+    try {
+      const { ipcRenderer } = window.require("electron");
+      const result = await ipcRenderer.invoke("check-for-updates");
+      
+      if (result.success) {
+        // Update status will be handled by event listeners
+      } else {
+        setUpdateError(result.error);
+      }
+    } catch (error) {
+      console.error("Erro ao verificar atualizações:", error);
+      setUpdateError("Erro ao verificar atualizações");
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  const handleDownloadUpdate = async () => {
+    try {
+      const { ipcRenderer } = window.require("electron");
+      await ipcRenderer.invoke("download-update");
+    } catch (error) {
+      console.error("Erro ao baixar atualização:", error);
+      setUpdateError("Erro ao baixar atualização");
+    }
+  };
+
+  const handleInstallUpdate = () => {
+    try {
+      const { ipcRenderer } = window.require("electron");
+      ipcRenderer.invoke("quit-and-install");
+    } catch (error) {
+      console.error("Erro ao instalar atualização:", error);
+      setUpdateError("Erro ao instalar atualização");
     }
   };
 
@@ -230,6 +320,82 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 className="h-5 w-5 text-primary border-foreground/30 rounded-md focus:ring-0 hover:cursor-pointer transition-all"
               />
               <span className="text-xs text-foreground">Enable Automatic Updates</span>
+            </div>
+          </>
+
+          <>
+            <div className="flex flex-col mb-5 gap-1.5">
+              <label className="block text-sm font-bold text-primary">Update Management</label>
+              <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-30">
+                <BsInfoCircleFill className="w-3 h-3" />
+                Check for updates manually or manage pending updates.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {updateError && (
+                <div className="p-2 bg-red-600/20 text-red-400 rounded-sm text-xs">
+                  {updateError}
+                </div>
+              )}
+
+              {isUpdateAvailable && !isUpdateDownloaded && (
+                <div className="p-2 bg-blue-600/20 text-blue-400 rounded-sm text-xs">
+                  Update available! Click download to get the latest version.
+                </div>
+              )}
+
+              {isUpdateDownloaded && (
+                <div className="p-2 bg-green-600/20 text-green-400 rounded-sm text-xs">
+                  Update downloaded! Click install to apply the update.
+                </div>
+              )}
+
+              {downloadProgress > 0 && downloadProgress < 100 && (
+                <div className="space-y-1">
+                  <div className="text-xs text-foreground">Downloading update: {Math.round(downloadProgress)}%</div>
+                  <div className="w-full bg-background/20 rounded-sm h-2">
+                    <div 
+                      className="h-2 bg-primary rounded-sm transition-all duration-300"
+                      style={{ width: `${downloadProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleCheckForUpdates}
+                  disabled={isCheckingUpdate}
+                  className="flex-1 px-3 py-2 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center justify-center gap-2 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <BiRefresh className={`w-4 h-4 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                  {isCheckingUpdate ? 'Checking...' : 'Check for Updates'}
+                </button>
+
+                {isUpdateAvailable && !isUpdateDownloaded && (
+                  <button
+                    type="button"
+                    onClick={handleDownloadUpdate}
+                    className="flex-1 px-3 py-2 bg-blue-600/20 text-blue-400 rounded-sm hover:bg-blue-600/30 transition-colors flex items-center justify-center gap-2 hover:cursor-pointer"
+                  >
+                    <BiDownload className="w-4 h-4" />
+                    Download Update
+                  </button>
+                )}
+
+                {isUpdateDownloaded && (
+                  <button
+                    type="button"
+                    onClick={handleInstallUpdate}
+                    className="flex-1 px-3 py-2 bg-green-600/20 text-green-400 rounded-sm hover:bg-green-600/30 transition-colors flex items-center justify-center gap-2 hover:cursor-pointer"
+                  >
+                    <BiCheck className="w-4 h-4" />
+                    Install & Restart
+                  </button>
+                )}
+              </div>
             </div>
           </>
 

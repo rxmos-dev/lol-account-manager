@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -7,6 +8,59 @@ import axios from 'axios';
 import https from 'https';
 import { Buffer } from 'buffer';
 import CryptoJS from 'crypto-js';
+
+// Configure auto-updater
+autoUpdater.checkForUpdatesAndNotify();
+
+// Auto-updater events
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for update...');
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('Update available.');
+  // Send event to renderer
+  BrowserWindow.getAllWindows().forEach(win => {
+    win.webContents.send('update-available', info);
+  });
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('Update not available.');
+  // Send event to renderer
+  BrowserWindow.getAllWindows().forEach(win => {
+    win.webContents.send('update-not-available', info);
+  });
+});
+
+autoUpdater.on('error', (err) => {
+  console.log('Error in auto-updater. ' + err);
+  // Send event to renderer
+  BrowserWindow.getAllWindows().forEach(win => {
+    win.webContents.send('updater-error', err);
+  });
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  let log_message = "Download speed: " + progressObj.bytesPerSecond;
+  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+  console.log(log_message);
+  // Send event to renderer
+  BrowserWindow.getAllWindows().forEach(win => {
+    win.webContents.send('download-progress', progressObj);
+  });
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('Update downloaded');
+  // Send event to renderer
+  BrowserWindow.getAllWindows().forEach(win => {
+    win.webContents.send('update-downloaded', info);
+  });
+  // Don't auto-install, let user decide
+  // autoUpdater.quitAndInstall();
+});
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -649,6 +703,38 @@ ipcMain.handle('launch-league', async (event, leaguePath) => {
   }
 });
 
+// Auto-updater IPC handlers
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    return { success: true, updateInfo: result };
+  } catch (error) {
+    console.error('Error checking for updates:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('download-update', async () => {
+  try {
+    await autoUpdater.downloadUpdate();
+    return { success: true };
+  } catch (error) {
+    console.error('Error downloading update:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('quit-and-install', () => {
+  autoUpdater.quitAndInstall();
+});
+
+ipcMain.handle('get-update-status', () => {
+  return {
+    isUpdateAvailable: autoUpdater.updateAvailable,
+    isUpdateDownloaded: autoUpdater.updateDownloaded
+  };
+});
+
 // Carrega configuração na inicialização
 const loadConfig = () => {
   try {
@@ -670,6 +756,11 @@ const loadConfig = () => {
 app.whenReady().then(() => {
   loadConfig();
   createWindow();
+  
+  // Check for updates after app is ready
+  setTimeout(() => {
+    autoUpdater.checkForUpdatesAndNotify();
+  }, 3000); // Wait 3 seconds before checking for updates
 });
 
 app.on('window-all-closed', () => {
