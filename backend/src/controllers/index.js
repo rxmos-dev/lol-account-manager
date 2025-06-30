@@ -27,7 +27,7 @@ const getPuuid = async (req, res) => {
         }
 
         const data = await response.json();
-        const puuid = data.puuid.toLowerCase(); // Normalizando o PUUID para minúsculas
+        const puuid = data.puuid;
         res.json({ puuid });
 
     } catch (error) {
@@ -62,25 +62,11 @@ const getElo = async (req, res) => {
         }
 
         const accountData = await accountResponse.json();
-        const puuid = accountData.puuid.toLowerCase();
-
-        // Obter informações do summoner usando o PUUID
-        const summonerUrl = `https://br1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`;
-        
-        const summonerResponse = await fetch(summonerUrl, {
-            headers: { 'X-Riot-Token': riotApiKey },
-        });
-
-        if (!summonerResponse.ok) {
-            const errorData = await summonerResponse.json();
-            return res.status(summonerResponse.status).json({ error: errorData });
-        }
-
-        const summonerData = await summonerResponse.json();
+        const puuid = accountData.puuid;
 
         // Obter informações de ranking usando o summoner ID
-        const rankedUrl = `https://br1.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerData.id}`;
-        
+        const rankedUrl = `https://br1.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`;
+
         const rankedResponse = await fetch(rankedUrl, {
             headers: { 'X-Riot-Token': riotApiKey },
         });
@@ -93,8 +79,14 @@ const getElo = async (req, res) => {
         const rankedData = await rankedResponse.json();
         
         res.json({
-            summoner: summonerData,
-            ranks: rankedData
+            elo: rankedData.map(entry => ({
+                queueType: entry.queueType,
+                tier: entry.tier,
+                rank: entry.rank,
+                leaguePoints: entry.leaguePoints,
+                wins: entry.wins,
+                losses: entry.losses,
+            })),
         });
 
     } catch (error) {
