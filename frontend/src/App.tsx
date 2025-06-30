@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Navbar from "./Navbar";
+import Navbar from "./components/Navbar";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { BiPlus, BiPlusCircle, BiGridAlt, BiListUl } from "react-icons/bi";
 import AddAccountModal from "./components/AddAccountModal";
@@ -7,6 +7,7 @@ import AccountDetailsModal from "./components/AccountDetailsModal";
 import GridCard from "./components/GridCard";
 import ListCard from "./components/ListCard";
 import { saveAccounts, loadAccounts, AccountData, updateAccountsWithPuuids } from "./utils/accountsManager";
+import Footer from "./components/Footer";
 
 // Função para formatar dados de elo
 export const formatEloData = (eloData: any) => {
@@ -56,25 +57,25 @@ export const getTierBorderColor = (tier: string): string => {
 // Função para ordenar contas por elo (do mais alto para o mais baixo)
 export const sortAccountsByElo = (accounts: AccountData[]): AccountData[] => {
   const tierOrder = {
-    "CHALLENGER": 8,
-    "GRANDMASTER": 7,
-    "MASTER": 6,
-    "DIAMOND": 5,
-    "EMERALD": 4,
-    "PLATINUM": 3,
-    "GOLD": 2,
-    "SILVER": 1,
-    "BRONZE": 0,
-    "IRON": -1,
-    "UNRANKED": -2
+    CHALLENGER: 8,
+    GRANDMASTER: 7,
+    MASTER: 6,
+    DIAMOND: 5,
+    EMERALD: 4,
+    PLATINUM: 3,
+    GOLD: 2,
+    SILVER: 1,
+    BRONZE: 0,
+    IRON: -1,
+    UNRANKED: -2,
   };
 
   const rankOrder = {
-    "I": 4,
-    "II": 3,
-    "III": 2,
-    "IV": 1,
-    "": 0
+    I: 4,
+    II: 3,
+    III: 2,
+    IV: 1,
+    "": 0,
   };
 
   return [...accounts].sort((a, b) => {
@@ -82,15 +83,15 @@ export const sortAccountsByElo = (accounts: AccountData[]): AccountData[] => {
     const eloB = formatEloData(b.eloData);
 
     // Compara por tier primeiro
-    const tierDiff = (tierOrder[eloB.tier as keyof typeof tierOrder] || -2) - 
-                    (tierOrder[eloA.tier as keyof typeof tierOrder] || -2);
-    
+    const tierDiff =
+      (tierOrder[eloB.tier as keyof typeof tierOrder] || -2) - (tierOrder[eloA.tier as keyof typeof tierOrder] || -2);
+
     if (tierDiff !== 0) return tierDiff;
 
     // Se o tier for o mesmo, compara por rank
-    const rankDiff = (rankOrder[eloB.rank as keyof typeof rankOrder] || 0) - 
-                    (rankOrder[eloA.rank as keyof typeof rankOrder] || 0);
-    
+    const rankDiff =
+      (rankOrder[eloB.rank as keyof typeof rankOrder] || 0) - (rankOrder[eloA.rank as keyof typeof rankOrder] || 0);
+
     if (rankDiff !== 0) return rankDiff;
 
     // Se tier e rank forem iguais, compara por LP
@@ -192,8 +193,6 @@ function App(): React.JSX.Element {
     console.log("Account deleted:", accountToDelete);
   };
 
-
-
   return (
     <ThemeProvider>
       <div className="bg-background min-h-screen flex flex-col relative">
@@ -288,7 +287,7 @@ function App(): React.JSX.Element {
 
                   <button
                     onClick={() => setIsModalOpen(true)}
-                    className="bg-secondary/30 border-l-4 border-green-500 rounded-lg shadow-md p-6 w-full flex flex-row items-center justify-center gap-3 hover:cursor-pointer hover:bg-secondary/50 hover:shadow-lg transition-all group"
+                    className="bg-secondary/30 border-l-4 border-green-500 rounded-lg shadow-md p-6 w-full flex flex-row items-center justify-center gap-3 hover:cursor-pointer hover:bg-secondary/50 transition-all group"
                   >
                     <div className="flex flex-col items-center">
                       <span className="flex flex-row items-center gap-1 text-xl font-bold text-primary">
@@ -304,6 +303,8 @@ function App(): React.JSX.Element {
             </>
           )}
         </div>
+
+        <Footer />
 
         <AddAccountModal
           isOpen={isModalOpen}

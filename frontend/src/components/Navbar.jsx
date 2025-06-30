@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { HiMoon, HiSun } from "react-icons/hi";
-import { useTheme } from "./contexts/ThemeContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { SiLeagueoflegends } from "react-icons/si";
 import { PiGearBold } from "react-icons/pi";
 import { IoMdClose } from "react-icons/io";
 import { BsFillHeartFill, BsTranslate } from "react-icons/bs";
 import { HiChevronDown } from "react-icons/hi";
-import SettingsModal from "./components/SettingsModal";
+import SettingsModal from "./SettingsModal";
 import { LuMaximize2 } from "react-icons/lu";
 import { MdMinimize } from "react-icons/md";
 

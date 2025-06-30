@@ -17,7 +17,7 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
     <div
       key={index}
       onClick={() => onClick(account)}
-      className={`bg-secondary border-l-4 rounded-lg shadow-md py-3 px-5 w-full flex flex-row items-center justify-between hover:cursor-pointer hover:bg-secondary/80 hover:shadow-lg hover:border-l-0 transition-all ${getTierBorderColor(
+      className={`bg-secondary border-l-4 rounded-lg shadow-md py-3 px-5 w-full flex flex-row items-center justify-between hover:cursor-pointer hover:bg-secondary/80 hover:border-l-0 transition-all ${getTierBorderColor(
         eloInfo.tier
       )}`}
     >
