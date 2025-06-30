@@ -91,6 +91,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSu
   return (
     <div className="fixed inset-0 bg-background/90 flex items-center justify-center z-50">
       <div className="bg-secondary border rounded-lg p-6 w-full max-w-md mx-4 shadow-xl relative">
+        
         <button
           type="button"
           onClick={onClose}
@@ -99,6 +100,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSu
         >
           <BiX />
         </button>
+
         <img
           src="/riot.svg"
           alt="League of Legends Logo"

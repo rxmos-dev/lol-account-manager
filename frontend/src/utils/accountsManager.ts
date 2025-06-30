@@ -7,6 +7,7 @@ interface AccountData {
   summonerName: string;
   tagline: string;
   puuid?: string; // Adicionando campo opcional para PUUID
+  eloData?: any; // Adicionando campo opcional para dados de elo
 }
 
 // Verifica se estamos em ambiente Electron
@@ -66,50 +67,58 @@ export const fetchPuuid = async (summonerName: string, tagline: string): Promise
   }
 };
 
-// Função para atualizar accounts com PUUIDs
+// Função para atualizar accounts com PUUIDs e dados de elo
 export const updateAccountsWithPuuids = async (accounts: AccountData[]): Promise<AccountData[]> => {
   const updatedAccounts = await Promise.all(
     accounts.map(async (account) => {
+      let updatedAccount = { ...account };
+      
+      // Busca PUUID se não existe
       if (!account.puuid) {
         const puuid = await fetchPuuid(account.summonerName, account.tagline);
-        return { ...account, puuid };
+        updatedAccount.puuid = puuid;
       }
-      return account;
+      
+      // Busca dados de elo
+      const eloData = await fetchEloData(account.summonerName, account.tagline);
+      updatedAccount.eloData = eloData;
+      
+      return updatedAccount;
     })
   );
   
   return updatedAccounts;
 };
 
-// Função para buscar dados de rank usando PUUID
-export const fetchRankData = async (puuid: string, region: string = 'br1'): Promise<any> => {
+// Função para buscar dados de elo via API hospedada
+export const fetchEloData = async (summonerName: string, tagline: string): Promise<any> => {
   try {
-    // Primeiro busca o summoner ID usando o PUUID
-    const summonerResponse = await axios.get(
-      `https://${region}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`,
-      {
-        headers: {
-          'X-Riot-Token': 'RIOT_API_KEY_AQUI' // Você precisará configurar isso
-        }
-      }
-    );
+    const response = await axios.post('https://api-lol-account-manager.vercel.app/api/v1/elo', {
+      summonerName,
+      tagline
+    });
     
-    const summonerId = summonerResponse.data.id;
-    
-    // Depois busca os dados de ranked usando o summoner ID
-    const rankResponse = await axios.get(
-      `https://${region}.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerId}`,
-      {
-        headers: {
-          'X-Riot-Token': 'RIOT_API_KEY_AQUI' // Você precisará configurar isso
-        }
-      }
-    );
-    
-    return rankResponse.data;
+    return response.data;
   } catch (error) {
-    console.error('Erro ao buscar dados de rank:', error);
+    console.error('Erro ao buscar dados de elo:', error);
     return null;
+  }
+};
+
+// Função para deletar uma conta
+export const deleteAccount = async (accountToDelete: AccountData): Promise<boolean> => {
+  try {
+    const accounts = await loadAccounts();
+    const updatedAccounts = accounts.filter(account => 
+      !(account.username === accountToDelete.username && 
+        account.summonerName === accountToDelete.summonerName && 
+        account.tagline === accountToDelete.tagline)
+    );
+    
+    return await saveAccounts(updatedAccounts);
+  } catch (error) {
+    console.error("Erro ao deletar conta:", error);
+    return false;
   }
 };
 

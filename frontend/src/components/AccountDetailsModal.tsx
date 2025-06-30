@@ -1,82 +1,142 @@
 import React, { useState } from "react";
-import { BiX, BiCopy, BiCheck, BiShow, BiHide } from "react-icons/bi";
-import { BsInfoCircleFill } from "react-icons/bs";
-import { AccountData } from "../utils/accountsManager";
+import { BiX, BiCopy, BiCheck, BiShow, BiHide, BiEdit, BiTrash } from "react-icons/bi";
+import { BsInfoCircleFill, BsPlayBtn } from "react-icons/bs";
+import { AccountData, deleteAccount } from "../utils/accountsManager";
+import { formatEloData } from "../App"; // Importa a função de formatação de elo
+import { FaPlay } from "react-icons/fa";
 
 interface AccountDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   account: AccountData | null;
+  onSave?: (updatedAccount: AccountData) => void;
+  onDelete?: (accountToDelete: AccountData) => void;
 }
 
-const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClose, account }) => {
+const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClose, account, onSave, onDelete }) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [editableAccount, setEditableAccount] = useState<AccountData | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const copyToClipboard = async (text: string, field: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedField(field);
-      setTimeout(() => setCopiedField(null), 5000);
-    } catch (error) {
-      console.error("Erro ao copiar:", error);
-      // Fallback para navegadores mais antigos
-      const textArea = document.createElement("textarea");
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
-      setCopiedField(field);
-      setTimeout(() => setCopiedField(null), 5000);
+    await navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 5000);
+  };
+
+  // Inicializa o estado editável quando a conta muda
+  React.useEffect(() => {
+    if (account) {
+      setEditableAccount({ ...account });
+      setHasUnsavedChanges(false);
+    }
+  }, [account]);
+
+  const handleInputChange = (field: keyof AccountData, value: string) => {
+    if (editableAccount) {
+      setEditableAccount({ ...editableAccount, [field]: value });
+      setHasUnsavedChanges(true);
     }
   };
 
-  if (!isOpen || !account) return null;
+  const handleSave = () => {
+    if (editableAccount && onSave) {
+      onSave(editableAccount);
+      setHasUnsavedChanges(false);
+    }
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (account && onDelete) {
+      const confirmDelete = window.confirm(
+        `Are you sure you want to delete the account "${account.summonerName}#${account.tagline}"? This action cannot be undone.`
+      );
+      if (confirmDelete) {
+        onDelete(account);
+        onClose();
+      }
+    }
+  };
+
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      const confirm = window.confirm("You have unsaved changes. Are you sure you want to close without saving?");
+      if (!confirm) return;
+    }
+    setHasUnsavedChanges(false);
+    onClose();
+  };
+
+  if (!isOpen || !account || !editableAccount) return null;
 
   return (
     <div className="fixed inset-0 bg-background/90 flex items-center justify-center z-50">
       <div className="bg-secondary border rounded-lg p-6 w-full max-w-md mx-4 shadow-xl relative">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute bg-background/50 rounded-md top-3 right-3 text-xl p-1 text-foreground hover:text-primary transition-colors hover:cursor-pointer hover:bg-red-600"
-          aria-label="Fechar modal"
-        >
-          <BiX />
-        </button>
+        {hasUnsavedChanges && (
+          <div className="absolute top-0 left-0 right-0 bg-yellow-500/20 border-b border-yellow-500/30 rounded-t-lg p-2 text-center">
+            <p className="text-yellow-600 text-xs font-medium">⚠️ Unsaved changes - Click save to keep your changes</p>
+          </div>
+        )}
+        <div className={`flex items-center justify-end gap-2 ${hasUnsavedChanges ? "mt-8" : ""}`}>
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="rounded-md top-3 right-3 text-lg p-2 text-red-400 hover:text-red-600 transition-colors hover:cursor-pointer hover:bg-background"
+            aria-label="Delete account"
+          >
+            <BiTrash />
+          </button>
 
-        <div className="flex flex-col items-center mb-6">
-          <div className="text-center">
-            <div className="flex flex-row gap-1 items-center">
-              <p className="text-lg font-semibold text-primary">{account.summonerName}</p>
-              <p className="text-sm opacity-50">#{account.tagline}</p>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="ml-auto bg-background/50 rounded-md top-3 right-3 text-xl p-1 text-foreground hover:text-primary transition-colors hover:cursor-pointer hover:bg-red-600"
+            aria-label="Close modal"
+          >
+            <BiX />
+          </button>
+        </div>
+        <div className="text-start flex flex-col gap-3 my-4">
+          <div className="flex flex-row gap-2 items-center border-b border-foreground/10 pb-5">
+            <div className="flex flex-row items-baseline gap-1">
+              <h1 className="text-xl font-bold">{account.summonerName}</h1>
+              <p className="text-[10px] text-foreground opacity-50">#{account.tagline}</p>
             </div>
 
-          <p className="text-xs text-foreground mt-1 opacity-70">{account.region} | {account.elo} </p>
+            <p className="text-xs text-foreground opacity-50 ml-auto">
+              {(() => {
+                const eloInfo = formatEloData(editableAccount.eloData);
+                return (
+                  <>
+                    {eloInfo.tier === "UNRANKED" ? "UNRANKED" : `${eloInfo.tier} ${eloInfo.rank}`}
+                    {eloInfo.lp > 0 && ` ${eloInfo.lp} LP`}
+                  </>
+                );
+              })()}
+            </p>
           </div>
         </div>
-
         <div className="space-y-4">
           <div>
             <div className="flex flex-col mb-2 gap-1">
               <label className="block text-sm font-bold text-primary">Username</label>
               <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-50">
                 <BsInfoCircleFill />
-                Click to copy the username
+                Edit the username or use the copy button
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-between items-center">
               <input
                 type="text"
-                value={account.username}
-                readOnly
-                className="flex-1 p-3 bg-background/20 text-sm rounded-sm text-foreground cursor-pointer"
-                onClick={() => copyToClipboard(account.username, "username")}
+                value={editableAccount.username}
+                onChange={(e) => handleInputChange("username", e.target.value)}
+                className="flex-1 p-3 bg-background/20 text-sm rounded-sm text-foreground border border-transparent focus:border-primary/50 focus:outline-none"
               />
               <button
-                onClick={() => copyToClipboard(account.username, "username")}
-                className="px-4 py-3 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
+                onClick={() => copyToClipboard(editableAccount.username, "username")}
+                className="h-[46px] px-4 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
                 title="Copiar username"
               >
                 {copiedField === "username" ? (
@@ -94,27 +154,26 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
               <label className="block text-sm font-bold text-primary">Password</label>
               <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-50">
                 <BsInfoCircleFill />
-                Click to copy the password
+                Edit the password or use the copy button
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-between items-center">
               <input
                 type={showPassword ? "text" : "password"}
-                value={account.password}
-                readOnly
-                className="flex-1 p-3 bg-background/20 text-sm rounded-sm text-foreground cursor-pointer"
-                onClick={() => copyToClipboard(account.password, "password")}
+                value={editableAccount.password}
+                onChange={(e) => handleInputChange("password", e.target.value)}
+                className="flex-1 p-3 bg-background/20 text-sm rounded-sm text-foreground border border-transparent focus:border-primary/50 focus:outline-none"
               />
               <button
                 onClick={() => setShowPassword(!showPassword)}
-                className="px-4 py-3 bg-background/20 text-foreground rounded-sm hover:bg-background/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
+                className="h-[46px] px-4 bg-background/20 text-foreground rounded-sm hover:bg-background/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
                 title={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
                 {showPassword ? <BiHide className="w-4 h-4" /> : <BiShow className="w-4 h-4" />}
               </button>
               <button
-                onClick={() => copyToClipboard(account.password, "password")}
-                className="px-4 py-3 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
+                onClick={() => copyToClipboard(editableAccount.password, "password")}
+                className="h-[46px] px-4 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
                 title="Copiar senha"
               >
                 {copiedField === "password" ? (
@@ -132,20 +191,47 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
               <label className="block text-sm font-bold text-primary">Riot ID</label>
               <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-50">
                 <BsInfoCircleFill />
-                Click to copy the full Riot ID
+                Edit the summoner name and tagline or use the copy button
               </p>
             </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={`${account.summonerName}#${account.tagline}`}
-                readOnly
-                className="flex-1 p-3 bg-background/20 text-sm rounded-sm text-foreground cursor-pointer"
-                onClick={() => copyToClipboard(`${account.summonerName}#${account.tagline}`, "riotId")}
-              />
+            <div className="flex gap-2 w-full">
+              <div className="flex-1 flex gap-1 items-center p-3 bg-background/20 rounded-sm border border-transparent focus-within:border-primary/50">
+                <select
+                  value={editableAccount.region}
+                  onChange={(e) => handleInputChange("region", e.target.value)}
+                  className="ml-auto text-xs text-foreground bg-secondary rounded-sm"
+                >
+                  <option value="BR1">BR</option>
+                  <option value="NA1">NA</option>
+                  <option value="EUW1">EUW</option>
+                  <option value="EUNE1">EUNE</option>
+                  <option value="KR">KR</option>
+                  <option value="JP1">JP</option>
+                  <option value="OC1">OCE</option>
+                  <option value="TR1">TR</option>
+                  <option value="RU">RU</option>
+                  <option value="LA1">LAN</option>
+                  <option value="LA2">LAS</option>
+                </select>
+                <input
+                  type="text"
+                  value={editableAccount.summonerName}
+                  onChange={(e) => handleInputChange("summonerName", e.target.value)}
+                  className="bg-transparent text-sm text-foreground text-center truncate focus:outline-none"
+                  placeholder="Summoner Name"
+                />
+                <span className="text-sm text-foreground opacity-50">#</span>
+                <input
+                  type="text"
+                  value={editableAccount.tagline}
+                  onChange={(e) => handleInputChange("tagline", e.target.value)}
+                  className="w-10 bg-transparent text-sm text-foreground focus:outline-none"
+                  placeholder="TAG"
+                />
+              </div>
               <button
-                onClick={() => copyToClipboard(`${account.summonerName}#${account.tagline}`, "riotId")}
-                className="px-4 py-3 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
+                onClick={() => copyToClipboard(`${editableAccount.summonerName}#${editableAccount.tagline}`, "riotId")}
+                className="h-[46px] px-4 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
                 title="Copiar Riot ID"
               >
                 {copiedField === "riotId" ? (
@@ -157,7 +243,6 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
             </div>
           </div>
         </div>
-
         {copiedField && (
           <div className="mt-3 p-2 bg-green-500/10 border border-green-500/30 rounded-sm text-center">
             <p className="text-green-500 text-sm">
@@ -165,7 +250,29 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
               clipboard!
             </p>
           </div>
-        )}
+        )}{" "}
+        <div>
+          <button
+            onClick={handleSave}
+            disabled={!hasUnsavedChanges}
+            className={`w-full mt-8 flex justify-center py-3 rounded-sm transition-colors ${
+              hasUnsavedChanges
+                ? "bg-foreground text-background hover:cursor-pointer hover:bg-primary/80"
+                : "bg-foreground text-background opacity-30 cursor-not-allowed"
+            }`}
+          >
+            <span className="text-xs">
+              {hasUnsavedChanges ? (
+                "Save Changes"
+              ) : (
+                <div className="flex items-center gap-2 flex-row">
+                  <FaPlay />
+                  <p>PLAY</p>
+                </div>
+              )}
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   );

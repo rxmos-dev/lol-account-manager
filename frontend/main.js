@@ -446,6 +446,7 @@ ipcMain.handle('load-accounts', async () => {
 
 // Handlers para configurações
 let customAccountsPath = null;
+let customLeaguePath = null;
 
 const getAccountsFilePath = () => {
   return customAccountsPath || path.join(app.getPath('userData'), 'accounts.json');
@@ -481,7 +482,14 @@ ipcMain.handle('set-accounts-path', async (event, newPath) => {
     
     // Salva a configuração
     const configPath = path.join(app.getPath('userData'), 'config.json');
-    const config = { accountsPath: newPath };
+    let config = {};
+    
+    // Carrega configuração existente se houver
+    if (fs.existsSync(configPath)) {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    }
+    
+    config.accountsPath = newPath;
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 
     return { success: true };
@@ -511,10 +519,18 @@ ipcMain.handle('reset-accounts-path', async () => {
 
     customAccountsPath = null;
     
-    // Remove configuração customizada
+    // Remove configuração customizada, mas preserva outras configurações
     const configPath = path.join(app.getPath('userData'), 'config.json');
     if (fs.existsSync(configPath)) {
-      fs.unlinkSync(configPath);
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      delete config.accountsPath;
+      
+      // Se há outras configurações, mantem o arquivo, senão remove
+      if (Object.keys(config).length > 0) {
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+      } else {
+        fs.unlinkSync(configPath);
+      }
     }
 
     return { success: true, defaultPath };
@@ -543,6 +559,96 @@ ipcMain.handle('select-accounts-folder', async () => {
   }
 });
 
+// League path management functions
+const getLeaguePath = () => {
+  return customLeaguePath || "C:\\Riot Games\\Riot Client\\RiotClientServices.exe";
+};
+
+ipcMain.handle('get-league-path', async () => {
+  return getLeaguePath();
+});
+
+ipcMain.handle('set-league-path', async (event, newPath) => {
+  try {
+    // Valida se o arquivo existe
+    if (!fs.existsSync(newPath)) {
+      return { success: false, error: 'Arquivo executável não encontrado' };
+    }
+
+    customLeaguePath = newPath;
+    
+    // Salva a configuração
+    const configPath = path.join(app.getPath('userData'), 'config.json');
+    let config = {};
+    
+    // Carrega configuração existente se houver
+    if (fs.existsSync(configPath)) {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    }
+    
+    config.leaguePath = newPath;
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+    return { success: true };
+  } catch (error) {
+    console.error('Erro ao definir caminho do League:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('select-league-exe', async () => {
+  try {
+    const { dialog } = await import('electron');
+    const result = await dialog.showOpenDialog({
+      title: 'Selecionar RiotClientServices.exe',
+      defaultPath: 'C:\\Riot Games\\Riot Client\\RiotClientServices.exe',
+      filters: [
+        { name: 'Executable Files', extensions: ['exe'] },
+        { name: 'All Files', extensions: ['*'] }
+      ],
+      properties: ['openFile']
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+      return { canceled: false, filePath: result.filePaths[0] };
+    }
+    
+    return { canceled: true };
+  } catch (error) {
+    console.error('Erro ao abrir dialog:', error);
+    return { canceled: true };
+  }
+});
+
+ipcMain.handle('launch-league', async (event, leaguePath) => {
+  try {
+    const execPath = leaguePath || getLeaguePath();
+    
+    // Verifica se o arquivo existe
+    if (!fs.existsSync(execPath)) {
+      return { success: false, error: 'Arquivo executável não encontrado: ' + execPath };
+    }
+
+    // Comando para abrir League of Legends
+    const command = `"${execPath}" --launch-product=league_of_legends --launch-patchline=live`;
+    
+    return new Promise((resolve) => {
+      exec(command, (error) => {
+        if (error) {
+          console.error('Erro ao executar League:', error);
+          resolve({ success: false, error: error.message });
+        } else {
+          console.log('League executado com sucesso');
+          resolve({ success: true });
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Erro ao abrir League of Legends:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 // Carrega configuração na inicialização
 const loadConfig = () => {
   try {
@@ -551,6 +657,9 @@ const loadConfig = () => {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
       if (config.accountsPath) {
         customAccountsPath = config.accountsPath;
+      }
+      if (config.leaguePath) {
+        customLeaguePath = config.leaguePath;
       }
     }
   } catch (error) {
