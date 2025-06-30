@@ -9,7 +9,7 @@ const Footer = () => {
 
   return (
     <nav className="bg-secondary p-2 border-b border-border shadow-sm justify-center flex items-center">
-      <a href="#" onClick={handleExternalLink} className="flex items-center text-foreground gap-2 text-sm opacity-20">
+      <a href="#" onClick={handleExternalLink} className="flex items-center text-foreground gap-2 text-sm opacity-10">
         <SiGithub />
         <p>@yurirxmos</p>
       </a>

@@ -1,6 +1,6 @@
 import React from "react";
 import { AccountData } from "../utils/accountsManager";
-import { formatEloData, getTierBorderColor } from "../App";
+import { formatEloData, getTierBorderColor, getChampionIcon, calculateMasteryWinrate } from "../App";
 
 interface GridCardProps {
   account: AccountData;
@@ -41,30 +41,50 @@ const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, 
     </div>
 
     <div className="flex flex-row items-center justify-center gap-2 mt-4">
-      <div className="flex flex-col items-center text-xs gap-1">
-        <img
-          src={ahriIcon}
-          alt="Ahri Icon"
-          className="w-8 h-8 rounded-sm"
-        />
-        55%
-      </div>
-      <div className="flex flex-col items-center text-xs gap-1">
-        <img
-          src={ahriIcon}
-          alt="Ahri Icon"
-          className="w-8 h-8 rounded-sm"
-        />
-        55%
-      </div>
-      <div className="flex flex-col items-center text-xs gap-1">
-        <img
-          src={ahriIcon}
-          alt="Ahri Icon"
-          className="w-8 h-8 rounded-sm"
-        />
-        55%
-      </div>
+      {account.championMasteriesData && account.championMasteriesData.length > 0 ? (
+        account.championMasteriesData.slice(0, 3).map((mastery, index) => (
+          <div key={index} className="flex flex-col items-center text-xs gap-1">
+            <img
+              src={getChampionIcon(mastery.championId)}
+              alt={`Champion ${mastery.championId}`}
+              className="w-8 h-8 rounded-sm"
+              onError={(e) => {
+                // Fallback para Ahri se o ícone não carregar
+                (e.target as HTMLImageElement).src = ahriIcon || "";
+              }}
+            />
+            M{mastery.championLevel}
+          </div>
+        ))
+      ) : (
+        // Fallback para quando não há dados de maestria
+        <>
+          <div className="flex flex-col items-center text-xs gap-1">
+            <img
+              src={ahriIcon}
+              alt="Ahri Icon"
+              className="w-8 h-8 rounded-sm"
+            />
+            55%
+          </div>
+          <div className="flex flex-col items-center text-xs gap-1">
+            <img
+              src={ahriIcon}
+              alt="Ahri Icon"
+              className="w-8 h-8 rounded-sm"
+            />
+            55%
+          </div>
+          <div className="flex flex-col items-center text-xs gap-1">
+            <img
+              src={ahriIcon}
+              alt="Ahri Icon"
+              className="w-8 h-8 rounded-sm"
+            />
+            55%
+          </div>
+        </>
+      )}
     </div>
   </div>
 );

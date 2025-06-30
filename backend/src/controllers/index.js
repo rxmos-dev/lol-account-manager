@@ -51,7 +51,7 @@ const getElo = async (req, res) => {
     try {
         // Primeiro, obter o PUUID
         const accountUrl = `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${summonerName}/${tagline}`;
-        
+
         const accountResponse = await fetch(accountUrl, {
             headers: { 'X-Riot-Token': riotApiKey },
         });
@@ -77,7 +77,7 @@ const getElo = async (req, res) => {
         }
 
         const rankedData = await rankedResponse.json();
-        
+
         res.json({
             elo: rankedData.map(entry => ({
                 queueType: entry.queueType,
@@ -95,8 +95,70 @@ const getElo = async (req, res) => {
     }
 };
 
+const getChampionMasteries = async (req, res) => {
+    const { summonerName, tagline } = req.body;
+    const riotApiKey = process.env.RIOT_API_KEY;
+
+    if (!summonerName || !tagline) {
+        return res.status(400).json({ error: 'summonerName e tagline são obrigatórios no body da requisição' });
+    }
+
+    if (!riotApiKey) {
+        return res.status(500).json({ error: 'API Key da Riot não foi configurada' });
+    }
+
+    try {
+        // Primeiro, obter o PUUID
+        const accountUrl = `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${summonerName}/${tagline}`;
+
+        const accountResponse = await fetch(accountUrl, {
+            headers: { 'X-Riot-Token': riotApiKey },
+        });
+
+        if (!accountResponse.ok) {
+            const errorData = await accountResponse.json();
+            return res.status(accountResponse.status).json({ error: errorData });
+        }
+
+        const accountData = await accountResponse.json();
+        const puuid = accountData.puuid;
+
+        const championMasteriesUrl = `https://br1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}`;
+
+        const championMasteriesResponse = await fetch(championMasteriesUrl, {
+            headers: { 'X-Riot-Token': riotApiKey },
+        });
+
+        if (!championMasteriesResponse.ok) {
+            const errorData = await championMasteriesResponse.json();
+            return res.status(championMasteriesResponse.status).json({ error: errorData });
+        }
+
+        const championMasteriesData = await championMasteriesResponse.json();
+
+        // Ordenar por championLevel (decrescente) e pegar os top 3
+        const top3Champions = championMasteriesData
+            .sort((a, b) => b.championLevel - a.championLevel)
+            .slice(0, 3)
+            .map(mastery => ({
+                championId: mastery.championId,
+                championLevel: mastery.championLevel,
+                championPoints: mastery.championPoints,
+                lastPlayTime: mastery.lastPlayTime,
+            }));
+
+        res.json({
+            championMasteriesData: top3Champions
+        });
+
+    } catch (error) {
+        console.error('Erro ao buscar dados da Riot API:', error);
+        res.status(500).json({ error: 'Failed to fetch data from Riot API', details: error.message });
+    }
+};
 
 module.exports = {
     getPuuid,
     getElo,
+    getChampionMasteries
 };

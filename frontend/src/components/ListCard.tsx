@@ -1,6 +1,6 @@
 import React from "react";
 import { AccountData } from "../utils/accountsManager";
-import { formatEloData, getTierBorderColor } from "../App";
+import { formatEloData, getTierBorderColor, getChampionIcon, calculateMasteryWinrate } from "../App";
 
 interface ListCardProps {
   account: AccountData;
@@ -52,30 +52,50 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
         <div className="flex flex-col items-center">
           <span className="text-xs opacity-30 uppercase tracking-wide mb-2">Top Champions</span>
           <div className="flex flex-row items-center gap-2">
-            <div className="flex flex-col items-center text-xs gap-1">
-              <img
-                src={ahriIcon}
-                alt="Ahri Icon"
-                className="w-10 h-10 rounded-lg shadow-sm"
-              />
-              <span className="font-bold text-green-400">55%</span>
-            </div>
-            <div className="flex flex-col items-center text-xs gap-1">
-              <img
-                src={ahriIcon}
-                alt="Ahri Icon"
-                className="w-10 h-10 rounded-lg shadow-sm"
-              />
-              <span className="font-bold text-green-400">55%</span>
-            </div>
-            <div className="flex flex-col items-center text-xs gap-1">
-              <img
-                src={ahriIcon}
-                alt="Ahri Icon"
-                className="w-10 h-10 rounded-lg shadow-sm"
-              />
-              <span className="font-bold text-green-400">55%</span>
-            </div>
+            {account.championMasteriesData && account.championMasteriesData.length > 0 ? (
+              account.championMasteriesData.slice(0, 3).map((mastery, index) => (
+                <div key={index} className="flex flex-col items-center text-xs gap-1">
+                  <img
+                    src={getChampionIcon(mastery.championId)}
+                    alt={`Champion ${mastery.championId}`}
+                    className="w-10 h-10 rounded-lg shadow-sm"
+                    onError={(e) => {
+                      // Fallback para Ahri se o ícone não carregar
+                      (e.target as HTMLImageElement).src = ahriIcon || "";
+                    }}
+                  />
+                  <span className="font-bold text-green-400">M{mastery.championLevel}</span>
+                </div>
+              ))
+            ) : (
+              // Fallback para quando não há dados de maestria
+              <>
+                <div className="flex flex-col items-center text-xs gap-1">
+                  <img
+                    src={ahriIcon}
+                    alt="Ahri Icon"
+                    className="w-10 h-10 rounded-lg shadow-sm"
+                  />
+                  <span className="font-bold text-green-400">55%</span>
+                </div>
+                <div className="flex flex-col items-center text-xs gap-1">
+                  <img
+                    src={ahriIcon}
+                    alt="Ahri Icon"
+                    className="w-10 h-10 rounded-lg shadow-sm"
+                  />
+                  <span className="font-bold text-green-400">55%</span>
+                </div>
+                <div className="flex flex-col items-center text-xs gap-1">
+                  <img
+                    src={ahriIcon}
+                    alt="Ahri Icon"
+                    className="w-10 h-10 rounded-lg shadow-sm"
+                  />
+                  <span className="font-bold text-green-400">55%</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

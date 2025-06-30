@@ -1,5 +1,12 @@
 import axios from 'axios';
 
+interface ChampionMastery {
+  championId: number;
+  championLevel: number;
+  championPoints: number;
+  lastPlayTime: number;
+}
+
 interface AccountData {
   region: string;
   username: string;
@@ -8,6 +15,7 @@ interface AccountData {
   tagline: string;
   puuid?: string; // Adicionando campo opcional para PUUID
   eloData?: any; // Adicionando campo opcional para dados de elo
+  championMasteriesData?: ChampionMastery[]; // Adicionando campo opcional para maestrias de campeões
 }
 
 // Verifica se estamos em ambiente Electron
@@ -83,6 +91,10 @@ export const updateAccountsWithPuuids = async (accounts: AccountData[]): Promise
       const eloData = await fetchEloData(account.summonerName, account.tagline);
       updatedAccount.eloData = eloData;
       
+      // Busca maestrias de campeões
+      const championMasteriesData = await fetchChampionMasteries(account.summonerName, account.tagline);
+      updatedAccount.championMasteriesData = championMasteriesData;
+      
       return updatedAccount;
     })
   );
@@ -105,6 +117,21 @@ export const fetchEloData = async (summonerName: string, tagline: string): Promi
   }
 };
 
+// Função para buscar maestrias de campeões via API hospedada
+export const fetchChampionMasteries = async (summonerName: string, tagline: string): Promise<ChampionMastery[] | null> => {
+  try {
+    const response = await axios.post('https://api-lol-account-manager.vercel.app/api/v1/champion-masteries', {
+      summonerName,
+      tagline
+    });
+    
+    return response.data.championMasteriesData;
+  } catch (error) {
+    console.error('Erro ao buscar maestrias de campeões:', error);
+    return null;
+  }
+};
+
 // Função para deletar uma conta
 export const deleteAccount = async (accountToDelete: AccountData): Promise<boolean> => {
   try {
@@ -122,4 +149,4 @@ export const deleteAccount = async (accountToDelete: AccountData): Promise<boole
   }
 };
 
-export type { AccountData };
+export type { AccountData, ChampionMastery };
