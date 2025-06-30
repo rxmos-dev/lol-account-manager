@@ -6,13 +6,14 @@ import os from 'os';
 import axios from 'axios';
 import https from 'https';
 import { Buffer } from 'buffer';
+import CryptoJS from 'crypto-js';
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 800,
+    width: 1200,
     height: 700,
     frame: false,
-    maximizable: false,
+    maximizable: true,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -374,7 +375,193 @@ ipcMain.handle('close-app', async () => {
   app.quit();
 });
 
-app.on('ready', createWindow);
+ipcMain.handle('minimize-app', async () => {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  if (focusedWindow) {
+    focusedWindow.minimize();
+  }
+});
+
+ipcMain.handle('maximize-app', async () => {
+  const focusedWindow = BrowserWindow.getFocusedWindow();
+  if (focusedWindow) {
+    if (focusedWindow.isMaximized()) {
+      focusedWindow.unmaximize();
+    } else {
+      focusedWindow.maximize();
+    }
+  }
+});
+
+// Handlers para gerenciamento de contas
+const encryptionKey = 'LoL-Account-Manager-2025'; // Em produção, use uma chave mais segura
+
+ipcMain.handle('save-accounts', async (event, accounts) => {
+  try {
+    const accountsFilePath = getAccountsFilePath();
+    
+    // Criptografar senhas antes de salvar
+    const encryptedAccounts = accounts.map(account => ({
+      ...account,
+      password: CryptoJS.AES.encrypt(account.password, encryptionKey).toString()
+    }));
+    
+    // Cria o diretório se não existir
+    const dir = path.dirname(accountsFilePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
+    fs.writeFileSync(accountsFilePath, JSON.stringify(encryptedAccounts, null, 2));
+    return { success: true };
+  } catch (error) {
+    console.error('Erro ao salvar contas:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('load-accounts', async () => {
+  try {
+    const accountsFilePath = getAccountsFilePath();
+    
+    if (!fs.existsSync(accountsFilePath)) {
+      return [];
+    }
+    
+    const data = fs.readFileSync(accountsFilePath, 'utf8');
+    const accounts = JSON.parse(data);
+    
+    // Descriptografar senhas
+    const decryptedAccounts = accounts.map(account => ({
+      ...account,
+      password: CryptoJS.AES.decrypt(account.password, encryptionKey).toString(CryptoJS.enc.Utf8)
+    }));
+    
+    return decryptedAccounts;
+  } catch (error) {
+    console.error('Erro ao carregar contas:', error);
+    return [];
+  }
+});
+
+// Handlers para configurações
+let customAccountsPath = null;
+
+const getAccountsFilePath = () => {
+  return customAccountsPath || path.join(app.getPath('userData'), 'accounts.json');
+};
+
+ipcMain.handle('get-accounts-path', async () => {
+  return getAccountsFilePath();
+});
+
+ipcMain.handle('set-accounts-path', async (event, newPath) => {
+  try {
+    // Valida se o diretório existe
+    const dir = path.dirname(newPath);
+    if (!fs.existsSync(dir)) {
+      return { success: false, error: 'Diretório não existe' };
+    }
+
+    // Se há um arquivo atual, move para o novo local
+    const currentPath = getAccountsFilePath();
+    if (fs.existsSync(currentPath) && currentPath !== newPath) {
+      try {
+        // Tenta mover o arquivo diretamente
+        fs.renameSync(currentPath, newPath);
+      } catch {
+        // Se falhar (possivelmente entre diferentes drives), copia e remove
+        const data = fs.readFileSync(currentPath, 'utf8');
+        fs.writeFileSync(newPath, data);
+        fs.unlinkSync(currentPath);
+      }
+    }
+
+    customAccountsPath = newPath;
+    
+    // Salva a configuração
+    const configPath = path.join(app.getPath('userData'), 'config.json');
+    const config = { accountsPath: newPath };
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+    return { success: true };
+  } catch (error) {
+    console.error('Erro ao definir caminho:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('reset-accounts-path', async () => {
+  try {
+    const defaultPath = path.join(app.getPath('userData'), 'accounts.json');
+    
+    // Move arquivo atual para o local padrão se necessário
+    const currentPath = getAccountsFilePath();
+    if (fs.existsSync(currentPath) && currentPath !== defaultPath) {
+      try {
+        // Tenta mover o arquivo diretamente
+        fs.renameSync(currentPath, defaultPath);
+      } catch {
+        // Se falhar (possivelmente entre diferentes drives), copia e remove
+        const data = fs.readFileSync(currentPath, 'utf8');
+        fs.writeFileSync(defaultPath, data);
+        fs.unlinkSync(currentPath);
+      }
+    }
+
+    customAccountsPath = null;
+    
+    // Remove configuração customizada
+    const configPath = path.join(app.getPath('userData'), 'config.json');
+    if (fs.existsSync(configPath)) {
+      fs.unlinkSync(configPath);
+    }
+
+    return { success: true, defaultPath };
+  } catch (error) {
+    console.error('Erro ao resetar caminho:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('select-accounts-folder', async () => {
+  try {
+    const { dialog } = await import('electron');
+    const result = await dialog.showSaveDialog({
+      title: 'Selecionar local para salvar accounts.json',
+      defaultPath: 'accounts.json',
+      filters: [
+        { name: 'JSON Files', extensions: ['json'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Erro ao abrir dialog:', error);
+    return { canceled: true };
+  }
+});
+
+// Carrega configuração na inicialização
+const loadConfig = () => {
+  try {
+    const configPath = path.join(app.getPath('userData'), 'config.json');
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      if (config.accountsPath) {
+        customAccountsPath = config.accountsPath;
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao carregar configuração:', error);
+  }
+};
+
+app.whenReady().then(() => {
+  loadConfig();
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   app.quit();

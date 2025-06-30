@@ -1,19 +1,12 @@
 import React, { useState } from "react";
 import { BiCheck, BiX } from "react-icons/bi";
 import { BsInfoCircleFill } from "react-icons/bs";
+import { AccountData } from "../utils/accountsManager";
 
 interface AddAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (accountData: AccountData) => void;
-}
-
-interface AccountData {
-  region: string;
-  username: string;
-  password: string;
-  summonerName: string;
-  tagline: string;
 }
 
 const regions = [
@@ -98,7 +91,6 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSu
   return (
     <div className="fixed inset-0 bg-background/90 flex items-center justify-center z-50">
       <div className="bg-secondary border rounded-lg p-6 w-full max-w-md mx-4 shadow-xl relative">
-        {/* Close button in the top right corner */}
         <button
           type="button"
           onClick={onClose}

@@ -1,28 +1,26 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { BiPlus, BiPlusCircle, BiUser, BiUserCircle } from "react-icons/bi";
+import { BiPlus, BiPlusCircle } from "react-icons/bi";
 import AddAccountModal from "./components/AddAccountModal";
-import { PiLockers } from "react-icons/pi";
-import { MdLock } from "react-icons/md";
-
-interface AccountData {
-  region: string;
-  username: string;
-  password: string;
-  summonerName: string;
-  tagline: string;
-}
+import AccountDetailsModal from "./components/AccountDetailsModal";
+import { saveAccounts, loadAccounts, AccountData } from "./utils/accountsManager";
 
 function App(): React.JSX.Element {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [accounts, setAccounts] = useState<AccountData[]>(() => {
-    // Carrega do localStorage ao iniciar
-    const stored = localStorage.getItem("accounts");
-    return stored ? JSON.parse(stored) : [];
-  });
-
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<AccountData | null>(null);
+  const [accounts, setAccounts] = useState<AccountData[]>([]);
   const [ahriIcon, setAhriIcon] = useState<string | null>(null);
+
+  // Carrega as contas na inicialização
+  useEffect(() => {
+    const initAccounts = async () => {
+      const loadedAccounts = await loadAccounts();
+      setAccounts(loadedAccounts);
+    };
+    initAccounts();
+  }, []);
 
   useEffect(() => {
     // Busca o ícone da Ahri do DataDragon
@@ -35,13 +33,20 @@ function App(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    // Salva no localStorage sempre que mudar
-    localStorage.setItem("accounts", JSON.stringify(accounts));
+    // Salva no arquivo JSON sempre que mudar
+    if (accounts.length > 0) {
+      saveAccounts(accounts);
+    }
   }, [accounts]);
 
   const handleAddAccount = (accountData: AccountData) => {
     setAccounts((prev) => [...prev, accountData]);
     console.log("Account added:", accountData);
+  };
+
+  const handleAccountClick = (account: AccountData) => {
+    setSelectedAccount(account);
+    setIsDetailsModalOpen(true);
   };
 
   return (
@@ -52,9 +57,11 @@ function App(): React.JSX.Element {
           {accounts.length === 0 ? (
             <>
               <h1 className="text-4xl font-bold text-primary">Welcome!</h1>
+
               <p className="mt-4 opacity-30 text-center max-w-md">
                 For start you need to add your account, don't worry all the password are encrypted.
               </p>
+
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="flex flex-row items-center gap-2 mt-4 bg-primary text-background px-3 py-3 rounded-lg animate-pulse hover:cursor-pointer text-sm shadow-sm"
@@ -68,7 +75,8 @@ function App(): React.JSX.Element {
                 <>
                   <div
                     key={index}
-                    className="bg-secondary border-b-5 border-red-500 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-40 h-60 flex flex-col hover:cursor-pointer hover:border-b-0 hover:animate-pulse transition-all"
+                    onClick={() => handleAccountClick(account)}
+                    className="bg-secondary border-b-5 border-blue-500 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-40 h-60 flex flex-col hover:cursor-pointer hover:border-b-0 hover:animate-pulse transition-all"
                   >
                     <div className="flex flex-col items-center text-sm font-semibold text-primary">
                       {account.summonerName}
@@ -114,7 +122,7 @@ function App(): React.JSX.Element {
                   <button
                     onClick={() => setIsModalOpen(true)}
                     key={`plus-${index}`}
-                    className="bg-secondary/30 border border-background/20 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-40 h-60 flex flex-col hover:cursor-pointer hover:scale-105 transition-transform duration-200"
+                    className="bg-secondary/30 border-b-5 border-green-500 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-40 h-60 flex flex-col hover:cursor-pointer hover:border-b-0 hover:animate-pulse transition-all"
                   >
                     <BiPlusCircle className="w-10 h-10 mb-1" />
                   </button>
@@ -128,6 +136,12 @@ function App(): React.JSX.Element {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleAddAccount}
+        />
+
+        <AccountDetailsModal
+          isOpen={isDetailsModalOpen}
+          onClose={() => setIsDetailsModalOpen(false)}
+          account={selectedAccount}
         />
       </div>
     </ThemeProvider>

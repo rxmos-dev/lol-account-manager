@@ -4,16 +4,18 @@ import { useTheme } from "./contexts/ThemeContext";
 import { SiLeagueoflegends } from "react-icons/si";
 import { PiGearBold } from "react-icons/pi";
 import { IoMdClose } from "react-icons/io";
-import { GiHeartTower } from "react-icons/gi";
-import { BiHeart } from "react-icons/bi";
 import { BsFillHeartFill, BsTranslate } from "react-icons/bs";
 import { HiChevronDown } from "react-icons/hi";
+import SettingsModal from "./components/SettingsModal";
+import { LuMaximize2 } from "react-icons/lu";
+import { MdMinimize } from "react-icons/md";
 
 const { ipcRenderer } = window.require("electron");
 
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("Português");
   const languageMenuRef = useRef(null);
 
@@ -22,6 +24,22 @@ const Navbar = () => {
       await ipcRenderer.invoke("close-app");
     } catch (error) {
       console.error("Erro ao fechar aplicação:", error);
+    }
+  };
+
+  const handleMinimizeApp = async () => {
+    try {
+      await ipcRenderer.invoke("minimize-app");
+    } catch (error) {
+      console.error("Erro ao minimizar aplicação:", error);
+    }
+  };
+
+  const handleMaximizeApp = async () => {
+    try {
+      await ipcRenderer.invoke("maximize-app");
+    } catch (error) {
+      console.error("Erro ao maximizar aplicação:", error);
     }
   };
 
@@ -49,10 +67,11 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="bg-secondary p-3 border-b border-border shadow-sm justify-between flex items-center drag-region">
+    <nav className="bg-secondary px-2 py-1 border-b border-border shadow-sm justify-between flex items-center drag-region">
       <div className="flex font-semibold items-center text-foreground gap-2 text-sm">
         <SiLeagueoflegends />
         <p>ACCOUNT MANAGER</p>
+        <p className="text-[9px] font-sans opacity-20">#buildinpublic</p>
       </div>
 
       <div className="flex items-center justify-between gap-2 no-drag">
@@ -105,17 +124,39 @@ const Navbar = () => {
           {theme === "dark" ? <HiSun className="w-3 h-3" /> : <HiMoon className="w-3 h-3" />}
         </button>
 
-        <button className="flex shadow-sm items-center text-foreground gap-2 bg-sidebar hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors">
+        <button
+          onClick={() => setIsSettingsModalOpen(true)}
+          className="flex shadow-sm items-center text-foreground gap-2 bg-sidebar hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
+        >
           <PiGearBold className="w-3 h-3" />
         </button>
 
-        <button
-          onClick={handleCloseApp}
-          className="ml-3 flex shadow-sm items-center text-foreground gap-2  p-2 hover:cursor-pointer hover:bg-red-600 rounded-md transition-all"
-        >
-          <IoMdClose className="w-3 h-3" />
-        </button>
+        <div className="flex flex-row gap-2 items-center border border-foreground/20 rounded-md ml-5">
+          <button
+            onClick={handleMinimizeApp}
+            className="flex shadow-sm items-center text-foreground gap-2  p-2 hover:cursor-pointer hover:bg-background/50 rounded-md transition-all"
+          >
+            <MdMinimize className="w-3 h-3 " />
+          </button>
+          <button
+            onClick={handleMaximizeApp}
+            className="flex shadow-sm items-center text-foreground gap-2  p-2 hover:cursor-pointer hover:bg-background/50 rounded-md transition-all"
+          >
+            <LuMaximize2 className="w-3 h-3" />
+          </button>
+          <button
+            onClick={handleCloseApp}
+            className="flex shadow-sm items-center text-foreground gap-2  p-2 hover:cursor-pointer hover:bg-red-600 rounded-md transition-all"
+          >
+            <IoMdClose className="w-3 h-3" />
+          </button>
+        </div>
       </div>
+
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+      />
     </nav>
   );
 };
