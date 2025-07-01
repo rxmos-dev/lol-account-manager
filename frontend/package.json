@@ -1,11 +1,8 @@
 {
-  "name": "desktop-app",
-  "private": true,
+  "name": "lol-account-manager",
   "version": "1.0.0",
-  "description": "LoL Account Manager",
-  "author": "@yurirxmos",
-  "type": "module",
-  "main": "main.js",
+  "description": "A simple account manager for League of Legends",
+  "main": ".vite/build/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -71,8 +68,7 @@
       "deleteAppDataOnUninstall": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "LoL Account Manager",
-      "include": "build/installer.nsh"
+      "shortcutName": "LoL Account Manager"
     },
     "publish": {
       "provider": "github",

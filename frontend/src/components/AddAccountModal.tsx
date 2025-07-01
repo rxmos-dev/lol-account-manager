@@ -102,7 +102,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSu
         </button>
 
         <img
-          src="/riot.svg"
+          src="./riot.svg"
           alt="League of Legends Logo"
           className="w-16 h-16 mx-auto mb-4"
         />

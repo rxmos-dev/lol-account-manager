@@ -9,6 +9,10 @@ import axios from 'axios';
 import https from 'https';
 import { Buffer } from 'buffer';
 import CryptoJS from 'crypto-js';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configure auto-updater
 autoUpdater.checkForUpdatesAndNotify();
@@ -76,7 +80,11 @@ function createWindow() {
     },
   });
 
-  win.loadURL('http://localhost:5173');
+  if (app.isPackaged) {
+    win.loadFile(path.join(__dirname, 'dist', 'index.html'));
+  } else {
+    win.loadURL('http://localhost:5173');
+  }
 }
 
 ipcMain.handle('check-lol-process', async () => {
