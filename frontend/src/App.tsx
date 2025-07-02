@@ -142,7 +142,7 @@ function App(): React.JSX.Element {
                       title="Atualizar todas as contas"
                       disabled={isLoadingAccounts}
                     >
-                      <VscJson className={`w-4 h-4 ${isLoadingAccounts ? "animate-spin" : ""}`} />
+                      <VscJson className="w-4 h-4" />
                       import .json file
                     </button>
 

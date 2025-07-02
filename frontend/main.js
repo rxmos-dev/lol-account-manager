@@ -79,7 +79,23 @@ function createWindow() {
   });
 
   if (app.isPackaged) {
-    win.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    // In production, try multiple possible paths
+    const possiblePaths = [
+      path.join(__dirname, 'dist', 'index.html'),
+      path.join(__dirname, '..', 'dist', 'index.html'),
+      path.join(app.getAppPath(), 'dist', 'index.html'),
+    ];
+    
+    let indexPath = possiblePaths[0];
+    for (const testPath of possiblePaths) {
+      if (fs.existsSync(testPath)) {
+        indexPath = testPath;
+        break;
+      }
+    }
+    
+    console.log('Loading packaged app from:', indexPath);
+    win.loadFile(indexPath);
   } else {
     win.loadURL('http://localhost:5173');
   }
