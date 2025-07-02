@@ -1,4 +1,5 @@
 import { BsFillHeartFill } from "react-icons/bs";
+import { FiAlertTriangle } from "react-icons/fi";
 import { SiGithub } from "react-icons/si";
 
 const Footer = () => {
@@ -18,10 +19,10 @@ const Footer = () => {
         <p>@yurirxmos</p>
       </a>
 
-      <button className="flex shadow-sm items-center text-foreground gap-2 bg-sidebar hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors animate-pulse">
-        <BsFillHeartFill className="w-3 h-3 text-red-500" />
-        <p className="text-xs font-bold">DONATE</p>
-      </button>
+      <p className="flex space-x-2 opacity-70 animate-pulse">
+        <span className="text-xs"> be careful! you're not using cloud storage</span>
+        <FiAlertTriangle className=" text-yellow-500" />
+      </p>
     </nav>
   );
 };

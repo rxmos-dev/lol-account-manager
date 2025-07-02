@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BiCheck, BiX, BiFolder, BiRefresh, BiPlay, BiDownload, BiInfoCircle, BiMedal } from "react-icons/bi";
+import { BiCheck, BiX, BiFolder, BiRefresh, BiPlay, BiDownload, BiInfoCircle, BiMedal, BiChevronDown } from "react-icons/bi";
 import { BsEyeFill, BsInfoCircleFill } from "react-icons/bs";
 import { GiSparkles } from "react-icons/gi";
 import { LuFolderSearch } from "react-icons/lu";
@@ -283,7 +283,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               </p>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -312,9 +312,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 </button>
               </div>
 
-              <p className="font-normal text-xs">or you can </p>
+              <p className="font-normal text-xs flex items-center gap-1 justify-self-center">or you can <BiChevronDown /></p>
               <button className="animate-pulse flex items-center gap-2 text-xs w-full justify-between px-3 py-2 bg-sidebar text-foreground rounded-sm hover:opacity-80 transition-all hover:cursor-pointer">
-                <p className="text-[11px] text-primary ">Save accounts on cloud</p>
+                <p className="text-[11px] text-primary ">Save your accounts on cloud</p>
 
                 <div className="flex items-center justify-center gap-1 bg-blue-500 px-2 py-1 rounded-sm text-foreground text-[8px]">
                   <BiMedal className="w-2 h-2" />

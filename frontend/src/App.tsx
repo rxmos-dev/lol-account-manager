@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import Navbar from "./components/Navbar";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ChampionProvider } from "./contexts/ChampionContext";
-import { BiPlus, BiPlusCircle, BiGridAlt, BiListUl, BiRefresh } from "react-icons/bi";
+import { BiPlus, BiPlusCircle, BiGridAlt, BiListUl, BiRefresh, BiImport } from "react-icons/bi";
 import AddAccountModal from "./components/AddAccountModal";
 import AccountDetailsModal from "./components/AccountDetailsModal";
 import GridCard from "./components/GridCard";
@@ -10,6 +10,8 @@ import ListCard from "./components/ListCard";
 import { AccountData } from "./utils/accountsManager";
 import Footer from "./components/Footer";
 import { useAccounts, useEloData, useAhriIcon, useViewMode, useModals } from "./hooks";
+import { VscJson } from "react-icons/vsc";
+import { LuRefreshCcw, LuRefreshCw, LuRefreshCwOff } from "react-icons/lu";
 
 // Re-exporta as funções utilitárias para uso em outros componentes
 export {
@@ -129,12 +131,25 @@ function App(): React.JSX.Element {
               <>
                 <div className="w-full flex flex-row justify-between items-center mb-6">
                   <div className="flex flex-col">
-                    <h2 className="text-2xl font-bold text-primary">My Accounts</h2>
                     <p className="text-sm opacity-30">
                       {accounts.length} account{accounts.length !== 1 ? "s" : ""} configured
                     </p>
                   </div>
                   <div className="flex flex-row items-center gap-2">
+
+                    <button
+                      className="flex flex-row items-center justify-center gap-1 text-[11px] px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all bg-secondary hover:opacity-80"
+                      title="Atualizar todas as contas"
+                      disabled={isLoadingAccounts}
+                    >
+                      <VscJson className={`w-4 h-4 ${isLoadingAccounts ? "animate-spin" : ""}`} />
+                      import .json file
+                    </button>
+
+
+                    <hr className="border border-foreground/20 h-6 mx-2" />
+
+
                     <button
                       onClick={() => setViewMode("card")}
                       className={`flex flex-row items-center justify-center gap-1 px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all ${
@@ -162,11 +177,11 @@ function App(): React.JSX.Element {
 
                     <button
                       onClick={handleRefreshAll}
-                      className="flex flex-row items-center justify-center gap-1 text-[11px] px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex flex-row items-center justify-center gap-1.5 text-[11px] px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all bg-green-700 text-white hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Atualizar todas as contas"
                       disabled={isLoadingAccounts}
                     >
-                      <BiRefresh className={`w-5 h-5 ${isLoadingAccounts ? "animate-spin" : ""}`} />
+                      <LuRefreshCw className={`w-3 h-3 ${isLoadingAccounts ? "animate-spin" : ""}`} />
                       refresh
                     </button>
                   </div>

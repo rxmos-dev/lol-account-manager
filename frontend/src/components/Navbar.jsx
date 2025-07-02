@@ -16,7 +16,7 @@ const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState("Português");
+  const [selectedLanguage, setSelectedLanguage] = useState("English");
   const languageMenuRef = useRef(null);
 
   const handleCloseApp = async () => {
@@ -91,8 +91,8 @@ const Navbar = () => {
             <div className="absolute top-full right-0 mt-1 bg-sidebar border border-border rounded-md shadow-lg py-1 z-50 min-w-[120px]">
               <button
                 onClick={() => handleLanguageSelect("English")}
-                className={`flex flex-row gap-1 items-center w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors ${
-                  selectedLanguage === "English" ? "text-blue-500" : "text-foreground"
+                className={`flex flex-row gap-1 items-center w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer ${
+                  selectedLanguage === "English" ? "text-green-500" : "text-foreground"
                 }`}
               >
                 English
@@ -100,8 +100,8 @@ const Navbar = () => {
               </button>
               <button
                 onClick={() => handleLanguageSelect("Português")}
-                className={`flex flex-row gap-1 items-center w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors ${
-                  selectedLanguage === "Português" ? "text-blue-500" : "text-foreground"
+                className={`flex flex-row gap-1 items-center w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer ${
+                  selectedLanguage === "Português" ? "text-green-500" : "text-foreground"
                 }`}
               >
                 Português
