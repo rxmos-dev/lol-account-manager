@@ -80,7 +80,7 @@ export const fetchPuuid = async (summonerName: string, tagline: string): Promise
       summonerName,
       tagline
     });
-    
+  
     return response.data;
   } catch (error) {
     console.error('Erro ao buscar PUUID:', error);
@@ -141,6 +141,8 @@ export const fetchChampionMasteries = async (summonerName: string, tagline: stri
       summonerName,
       tagline
     });
+    
+    console.log('Champion Masteries Data:', response.data.championMasteriesData);
     
     return response.data.championMasteriesData;
   } catch (error) {

@@ -1,6 +1,14 @@
 import React from "react";
 import { AccountData } from "../utils/accountsManager";
-import { formatEloData, getTierBorderColor, getChampionIcon, calculateMasteryWinrate, formatRoleName } from "../App";
+import {
+  formatEloData,
+  getTierBorderColor,
+  getChampionIcon,
+  calculateMasteryWinrate,
+  formatRoleName,
+  getChampionNameById,
+} from "../App";
+import { TbLoader2 } from "react-icons/tb";
 
 interface GridCardProps {
   account: AccountData;
@@ -14,7 +22,7 @@ const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, 
   <div
     key={index}
     onClick={() => onClick(account)}
-    className={`bg-secondary border-b-5 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-40 h-60 flex flex-col hover:cursor-pointer hover:border-b-0 hover:animate-pulse transition-all ${getTierBorderColor(
+    className={`bg-secondary border-b-5 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-40 h-60 flex flex-col hover:cursor-pointer hover:border-b-0 transition-all duration-50 ${getTierBorderColor(
       formatEloData(account.eloData).tier
     )}`}
   >
@@ -36,14 +44,20 @@ const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, 
       })()}
     </div>
 
-    <div className="flex flex-row items-center justify-center gap-2 mt-4">
-      <p className="text-xs">{account.summonerLaneData?.mainRole ? formatRoleName(account.summonerLaneData.mainRole) : "FILL"}</p>
+    <div className="flex flex-col items-center justify-center gap-2 mt-4">
+      <p className="text-[8px]">MAIN ROLE</p>
+      <p className="text-xs font-bold bg-background/50 px-2 py-1 rounded-md">
+        {account.summonerLaneData?.mainRole ? formatRoleName(account.summonerLaneData.mainRole) : "FILL"}
+      </p>
     </div>
 
     <div className="flex flex-row items-center justify-center gap-2 mt-4">
       {account.championMasteriesData && account.championMasteriesData.length > 0 ? (
         account.championMasteriesData.slice(0, 3).map((mastery, index) => (
-          <div key={index} className="flex flex-col items-center text-xs gap-1">
+          <div
+            key={index}
+            className="flex flex-col items-center text-xs gap-1"
+          >
             <img
               src={getChampionIcon(mastery.championId)}
               alt={`Champion ${mastery.championId}`}
@@ -53,36 +67,14 @@ const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, 
                 (e.target as HTMLImageElement).src = ahriIcon || "";
               }}
             />
-            M{mastery.championLevel}
+
+            <p className="text-[8px] text-muted-foreground uppercase">{getChampionNameById(mastery.championId)}</p>
           </div>
         ))
       ) : (
         // Fallback para quando não há dados de maestria
         <>
-          <div className="flex flex-col items-center text-xs gap-1">
-            <img
-              src={ahriIcon}
-              alt="Ahri Icon"
-              className="w-8 h-8 rounded-sm"
-            />
-            55%
-          </div>
-          <div className="flex flex-col items-center text-xs gap-1">
-            <img
-              src={ahriIcon}
-              alt="Ahri Icon"
-              className="w-8 h-8 rounded-sm"
-            />
-            55%
-          </div>
-          <div className="flex flex-col items-center text-xs gap-1">
-            <img
-              src={ahriIcon}
-              alt="Ahri Icon"
-              className="w-8 h-8 rounded-sm"
-            />
-            55%
-          </div>
+          <TbLoader2 className="animate-spin duration-75"/>
         </>
       )}
     </div>

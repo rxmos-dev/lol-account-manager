@@ -1,6 +1,8 @@
 import React from "react";
 import { AccountData } from "../utils/accountsManager";
 import { formatEloData, getTierBorderColor, getChampionIcon, calculateMasteryWinrate, formatRoleName } from "../App";
+import { getChampionNameById } from "../App";
+import { BiChevronRight } from "react-icons/bi";
 
 interface ListCardProps {
   account: AccountData;
@@ -17,7 +19,7 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
     <div
       key={index}
       onClick={() => onClick(account)}
-      className={`bg-secondary border-l-4 rounded-lg shadow-md py-3 px-5 w-full flex flex-row items-center justify-between hover:cursor-pointer hover:bg-secondary/80 hover:border-l-0 transition-all ${getTierBorderColor(
+      className={`bg-secondary border-l-5 rounded-lg shadow-md py-3 px-5 w-full flex flex-row items-center justify-between hover:cursor-pointer hover:border-l-0 transition-all duration-50 ${getTierBorderColor(
         eloInfo.tier
       )}`}
     >
@@ -65,6 +67,7 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
                       (e.target as HTMLImageElement).src = ahriIcon || "";
                     }}
                   />
+                  <p className="text-[8px] text-muted-foreground uppercase">{getChampionNameById(mastery.championId)}</p>
                 </div>
               ))
             ) : (
@@ -108,19 +111,7 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
 
         {/* Seta indicando que é clicável */}
         <div className="text-primary/60">
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
+          <BiChevronRight className="w-6 h-6" />
         </div>
       </div>
     </div>

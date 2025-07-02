@@ -4,6 +4,7 @@ import { BsInfoCircleFill, BsPlayBtn } from "react-icons/bs";
 import { AccountData, deleteAccount } from "../utils/accountsManager";
 import { formatEloData } from "../App"; // Importa a função de formatação de elo
 import { FaPlay } from "react-icons/fa";
+import { CgSpinner } from "react-icons/cg";
 
 interface AccountDetailsModalProps {
   isOpen: boolean;
@@ -18,6 +19,27 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
   const [showPassword, setShowPassword] = useState(false);
   const [editableAccount, setEditableAccount] = useState<AccountData | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [leaguePath, setLeaguePath] = useState("");
+  const [isLaunching, setIsLaunching] = useState(false);
+
+  const handlePlayLeague = async () => {
+    setIsLaunching(true);
+    try {
+      const { ipcRenderer } = window.require("electron");
+      const result = await ipcRenderer.invoke("launch-league", leaguePath);
+
+      if (!result.success) {
+        alert(`Erro ao abrir League of Legends: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Erro ao abrir League of Legends:", error);
+      alert("Erro ao abrir League of Legends");
+    } finally {
+      setTimeout(() => {
+        setIsLaunching(false);
+      }, 3000);
+    }
+  };
 
   const copyToClipboard = async (text: string, field: string) => {
     await navigator.clipboard.writeText(text);
@@ -31,7 +53,21 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
       setEditableAccount({ ...account });
       setHasUnsavedChanges(false);
     }
-  }, [account]);
+
+    const loadLeaguePath = async () => {
+      try {
+        const { ipcRenderer } = window.require("electron");
+        const currentPath = await ipcRenderer.invoke("get-league-path");
+        setLeaguePath(currentPath || "");
+      } catch (error) {
+        console.error("Erro ao carregar caminho do League:", error);
+      }
+    };
+
+    if (isOpen) {
+      loadLeaguePath();
+    }
+  }, [account, isOpen]);
 
   const handleInputChange = (field: keyof AccountData, value: string) => {
     if (editableAccount) {
@@ -252,26 +288,30 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
           </div>
         )}{" "}
         <div>
-          <button
-            onClick={handleSave}
-            disabled={!hasUnsavedChanges}
-            className={`w-full mt-8 flex justify-center py-3 rounded-sm transition-colors ${
+            <button
+            onClick={hasUnsavedChanges ? handleSave : handlePlayLeague}
+            disabled={isLaunching}
+            className={`w-full mt-8 flex justify-center py-3 rounded-sm transition-colors text-background hover:cursor-pointer ${
               hasUnsavedChanges
-                ? "bg-foreground text-background hover:cursor-pointer hover:bg-primary/80"
-                : "bg-foreground text-background opacity-30 cursor-not-allowed"
-            }`}
-          >
+              ? "bg-foreground hover:bg-primary/80"
+              : "bg-green-500 hover:opacity-85 text-foreground"
+            } ${isLaunching ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
             <span className="text-xs">
               {hasUnsavedChanges ? (
-                "Save Changes"
+              "Save Changes"
+              ) : isLaunching ? (
+              <div className="flex items-center gap-2 flex-row">
+                <CgSpinner className="animate-spin h-4 w-4" />
+              </div>
               ) : (
-                <div className="flex items-center gap-2 flex-row">
-                  <FaPlay />
-                  <p>PLAY</p>
-                </div>
+              <div className="flex items-center gap-2 flex-row">
+                <FaPlay />
+                <p>PLAY</p>
+              </div>
               )}
             </span>
-          </button>
+            </button>
         </div>
       </div>
     </div>

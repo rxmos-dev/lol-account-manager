@@ -12,7 +12,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [accountsPath, setAccountsPath] = useState("");
   const [leaguePath, setLeaguePath] = useState("");
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(false);
-  
+
   // Auto-updater states
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
   const [isUpdateDownloaded, setIsUpdateDownloaded] = useState(false);
@@ -25,11 +25,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       // Carrega o caminho atual do arquivo de contas
       loadCurrentPath();
       loadLeaguePath();
-      
+
       // Setup auto-updater event listeners
       try {
         const { ipcRenderer } = window.require("electron");
-        
+
         const handleUpdateAvailable = () => {
           setIsUpdateAvailable(true);
         };
@@ -47,23 +47,23 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         };
 
         const handleUpdaterError = (event: any, error: any) => {
-          setUpdateError(error.message || 'Erro no auto-updater');
+          setUpdateError(error.message || "Erro no auto-updater");
         };
 
         // Register listeners
-        ipcRenderer.on('update-available', handleUpdateAvailable);
-        ipcRenderer.on('update-not-available', handleUpdateNotAvailable);
-        ipcRenderer.on('download-progress', handleDownloadProgress);
-        ipcRenderer.on('update-downloaded', handleUpdateDownloaded);
-        ipcRenderer.on('updater-error', handleUpdaterError);
+        ipcRenderer.on("update-available", handleUpdateAvailable);
+        ipcRenderer.on("update-not-available", handleUpdateNotAvailable);
+        ipcRenderer.on("download-progress", handleDownloadProgress);
+        ipcRenderer.on("update-downloaded", handleUpdateDownloaded);
+        ipcRenderer.on("updater-error", handleUpdaterError);
 
         // Cleanup function
         return () => {
-          ipcRenderer.removeListener('update-available', handleUpdateAvailable);
-          ipcRenderer.removeListener('update-not-available', handleUpdateNotAvailable);
-          ipcRenderer.removeListener('download-progress', handleDownloadProgress);
-          ipcRenderer.removeListener('update-downloaded', handleUpdateDownloaded);
-          ipcRenderer.removeListener('updater-error', handleUpdaterError);
+          ipcRenderer.removeListener("update-available", handleUpdateAvailable);
+          ipcRenderer.removeListener("update-not-available", handleUpdateNotAvailable);
+          ipcRenderer.removeListener("download-progress", handleDownloadProgress);
+          ipcRenderer.removeListener("update-downloaded", handleUpdateDownloaded);
+          ipcRenderer.removeListener("updater-error", handleUpdaterError);
         };
       } catch (error) {
         console.error("Erro ao configurar listeners do updater:", error);
@@ -160,7 +160,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     try {
       const { ipcRenderer } = window.require("electron");
       const result = await ipcRenderer.invoke("check-for-updates");
-      
+
       if (result.success) {
         // Update status will be handled by event listeners
       } else {
@@ -333,11 +333,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             <div className="space-y-3">
-              {updateError && (
-                <div className="p-2 bg-red-600/20 text-red-400 rounded-sm text-xs">
-                  {updateError}
-                </div>
-              )}
+              {updateError && <div className="p-2 bg-red-600/20 text-red-400 rounded-sm text-xs">{updateError}</div>}
 
               {isUpdateAvailable && !isUpdateDownloaded && (
                 <div className="p-2 bg-blue-600/20 text-blue-400 rounded-sm text-xs">
@@ -355,7 +351,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 <div className="space-y-1">
                   <div className="text-xs text-foreground">Downloading update: {Math.round(downloadProgress)}%</div>
                   <div className="w-full bg-background/20 rounded-sm h-2">
-                    <div 
+                    <div
                       className="h-2 bg-primary rounded-sm transition-all duration-300"
                       style={{ width: `${downloadProgress}%` }}
                     ></div>
@@ -370,8 +366,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   disabled={isCheckingUpdate}
                   className="flex-1 px-3 py-2 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center justify-center gap-2 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <BiRefresh className={`w-4 h-4 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
-                  {isCheckingUpdate ? 'Checking...' : 'Check for Updates'}
+                  <BiRefresh className={`w-4 h-4 ${isCheckingUpdate ? "animate-spin" : ""}`} />
+                  {isCheckingUpdate ? "Checking..." : "Check for Updates"}
                 </button>
 
                 {isUpdateAvailable && !isUpdateDownloaded && (
