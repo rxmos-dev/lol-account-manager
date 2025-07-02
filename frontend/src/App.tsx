@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import Navbar from "./components/Navbar";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { ChampionProvider } from "./contexts/ChampionContext";
 import { BiPlus, BiPlusCircle, BiGridAlt, BiListUl, BiRefresh } from "react-icons/bi";
 import AddAccountModal from "./components/AddAccountModal";
 import AccountDetailsModal from "./components/AccountDetailsModal";
@@ -8,30 +9,24 @@ import GridCard from "./components/GridCard";
 import ListCard from "./components/ListCard";
 import { AccountData } from "./utils/accountsManager";
 import Footer from "./components/Footer";
-import { 
-  useAccounts, 
-  useEloData, 
-  useViewMode, 
-  useModals 
-} from "./hooks";
-import { getFallbackChampionIcon } from "./utils/gameUtils";
+import { useAccounts, useEloData, useAhriIcon, useViewMode, useModals } from "./hooks";
 
 // Re-exporta as funções utilitárias para uso em outros componentes
-export { 
-  calculateMasteryWinrate, 
-  formatRoleName, 
-  formatEloData, 
-  getTierBorderColor, 
+export {
+  calculateMasteryWinrate,
+  formatRoleName,
+  formatEloData,
+  getTierBorderColor,
   sortAccountsByElo,
   getChampionNameById,
-  getChampionIcon 
+  getChampionIcon,
 } from "./utils/gameUtils";
 
 function App(): React.JSX.Element {
   // Hooks customizados
-  const { 
-    accounts, 
-    isLoading: isLoadingAccounts, 
+  const {
+    accounts,
+    isLoading: isLoadingAccounts,
     loadInitialAccounts,
     addAccount,
     updateAccount: updateAccountData,
@@ -40,20 +35,18 @@ function App(): React.JSX.Element {
     forceUpdateAll,
   } = useAccounts();
 
-  const { 
-    sortAccountsByElo,
-  } = useEloData();
+  const { sortAccountsByElo } = useEloData();
 
-  const ahriIcon = getFallbackChampionIcon(); // Ícone de fallback
-  const { viewMode, setViewMode } = useViewMode('list');
-  const { 
-    isAddModalOpen, 
-    openAddModal, 
+  const { ahriIcon } = useAhriIcon();
+  const { viewMode, setViewMode } = useViewMode("list");
+  const {
+    isAddModalOpen,
+    openAddModal,
     closeAddModal,
     isDetailsModalOpen,
     selectedAccount,
     openDetailsModal,
-    closeDetailsModal 
+    closeDetailsModal,
   } = useModals();
 
   // Carrega dados iniciais
@@ -112,142 +105,144 @@ function App(): React.JSX.Element {
 
   return (
     <ThemeProvider>
-      <div className="bg-background min-h-screen flex flex-col relative">
-        <Navbar />
+      <ChampionProvider>
+        <div className="bg-background min-h-screen flex flex-col relative">
+          <Navbar />
 
-        <div className="flex-1 flex flex-col items-center justify-start p-4">
-          {accounts.length === 0 ? (
-            <>
-              <h1 className="text-4xl font-bold text-primary">Welcome!</h1>
+          <div className="flex-1 flex flex-col items-center justify-start p-4">
+            {accounts.length === 0 ? (
+              <>
+                <h1 className="text-4xl font-bold text-primary">Welcome!</h1>
 
-              <p className="mt-4 opacity-30 text-center max-w-md">
-                For start you need to add your account, don't worry all the password are encrypted.
-              </p>
+                <p className="mt-4 opacity-30 text-center max-w-md">
+                  For start you need to add your account, don't worry all the password are encrypted.
+                </p>
 
-              <button
-                onClick={openAddModal}
-                className="flex flex-row items-center gap-2 mt-4 bg-primary text-background px-3 py-3 rounded-lg animate-pulse hover:cursor-pointer text-sm shadow-sm"
-              >
-                <BiPlus />
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="w-full flex flex-row justify-between items-center mb-6">
-                <div className="flex flex-col">
-                  <h2 className="text-2xl font-bold text-primary">My Accounts</h2>
-                  <p className="text-sm opacity-30">
-                    {accounts.length} account{accounts.length !== 1 ? "s" : ""} configured
-                  </p>
+                <button
+                  onClick={openAddModal}
+                  className="flex flex-row items-center gap-2 mt-4 bg-primary text-background px-3 py-3 rounded-lg animate-pulse hover:cursor-pointer text-sm shadow-sm"
+                >
+                  <BiPlus />
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-full flex flex-row justify-between items-center mb-6">
+                  <div className="flex flex-col">
+                    <h2 className="text-2xl font-bold text-primary">My Accounts</h2>
+                    <p className="text-sm opacity-30">
+                      {accounts.length} account{accounts.length !== 1 ? "s" : ""} configured
+                    </p>
+                  </div>
+                  <div className="flex flex-row items-center gap-2">
+                    <button
+                      onClick={() => setViewMode("card")}
+                      className={`flex flex-row items-center justify-center gap-1 px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all ${
+                        viewMode === "card"
+                          ? "bg-primary text-background shadow-lg"
+                          : "bg-secondary text-primary hover:bg-secondary/80"
+                      }`}
+                      title="Card View"
+                    >
+                      <BiGridAlt />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`flex flex-row items-center justify-center gap-1 px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all ${
+                        viewMode === "list"
+                          ? "bg-primary text-background shadow-lg"
+                          : "bg-secondary text-primary hover:bg-secondary/80"
+                      }`}
+                      title="List View"
+                    >
+                      <BiListUl className="w-5 h-5" />
+                    </button>
+
+                    <hr className="border border-foreground/20 h-6 mx-2" />
+
+                    <button
+                      onClick={handleRefreshAll}
+                      className="flex flex-row items-center justify-center gap-1 text-[11px] px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Atualizar todas as contas"
+                      disabled={isLoadingAccounts}
+                    >
+                      <BiRefresh className={`w-5 h-5 ${isLoadingAccounts ? "animate-spin" : ""}`} />
+                      refresh
+                    </button>
+                  </div>
                 </div>
-                <div className="flex flex-row gap-2">
-                  <button
-                    onClick={handleRefreshAll}
-                    disabled={isLoadingAccounts}
-                    className="flex flex-row items-center justify-center gap-1 text-[10px] px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Atualizar todas as contas"
-                  >
-                    <BiRefresh className={isLoadingAccounts ? "animate-spin" : ""} />
-                    refresh
-                  </button>
-                  
-                  <button
-                    onClick={() => setViewMode("card")}
-                    className={`flex flex-row items-center justify-center gap-1 text-[10px] px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all ${
-                      viewMode === "card"
-                        ? "bg-primary text-background shadow-lg"
-                        : "bg-secondary text-primary hover:bg-secondary/80"
-                    }`}
-                    title="Card View"
-                  >
-                    <BiGridAlt />
-                    card
-                  </button>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={`flex flex-row items-center justify-center gap-1 text-[10px] px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all ${
-                      viewMode === "list"
-                        ? "bg-primary text-background shadow-lg"
-                        : "bg-secondary text-primary hover:bg-secondary/80"
-                    }`}
-                    title="List View"
-                  >
-                    <BiListUl />
-                    list
-                  </button>
-                </div>
-              </div>
 
-              {viewMode === "card" && (
-                <div className="w-full flex flex-wrap gap-4 justify-start items-start">
-                  {sortAccountsByElo(accounts).map((account, index) => (
-                    <GridCard
-                      key={index}
-                      account={account}
-                      index={index}
-                      onClick={handleAccountClick}
-                      ahriIcon={ahriIcon}
-                      isLoadingElo={isLoadingAccounts}
-                    />
-                  ))}
+                {viewMode === "card" && (
+                  <div className="w-full flex flex-wrap gap-4 justify-start items-start">
+                    {sortAccountsByElo(accounts).map((account, index) => (
+                      <GridCard
+                        key={index}
+                        account={account}
+                        index={index}
+                        onClick={handleAccountClick}
+                        ahriIcon={ahriIcon}
+                        isLoadingElo={isLoadingAccounts}
+                      />
+                    ))}
 
-                  <button
-                    onClick={openAddModal}
-                    className="bg-secondary/30 border-b-5 border-green-500 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-40 h-60 flex flex-col hover:cursor-pointer hover:border-b-0 transition-all duration-50"
-                  >
-                    <BiPlusCircle className="w-10 h-10 mb-1" />
-                  </button>
-                </div>
-              )}
+                    <button
+                      onClick={openAddModal}
+                      className="bg-secondary/30 border-b-5 border-green-500 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-40 h-60 flex flex-col hover:cursor-pointer hover:border-b-0 transition-all duration-50"
+                    >
+                      <BiPlusCircle className="w-10 h-10 mb-1" />
+                    </button>
+                  </div>
+                )}
 
-              {/* Visualização em Lista */}
-              {viewMode === "list" && (
-                <div className="w-full flex flex-col gap-3">
-                  {sortAccountsByElo(accounts).map((account, index) => (
-                    <ListCard
-                      key={index}
-                      account={account}
-                      index={index}
-                      onClick={handleAccountClick}
-                      ahriIcon={ahriIcon}
-                      isLoadingElo={isLoadingAccounts}
-                    />
-                  ))}
+                {/* Visualização em Lista */}
+                {viewMode === "list" && (
+                  <div className="w-full flex flex-col gap-3">
+                    {sortAccountsByElo(accounts).map((account, index) => (
+                      <ListCard
+                        key={index}
+                        account={account}
+                        index={index}
+                        onClick={handleAccountClick}
+                        ahriIcon={ahriIcon}
+                        isLoadingElo={isLoadingAccounts}
+                      />
+                    ))}
 
-                  <button
-                    onClick={openAddModal}
-                    className="bg-secondary/30 border-l-5 border-r-5 border-green-500 rounded-lg shadow-md p-6 w-full self-center flex flex-row items-center justify-center gap-3 hover:cursor-pointer hover:bg-secondary/50 transition-all group"
-                  >
-                    <div className="flex flex-col items-center">
-                      <span className="flex flex-row items-center gap-1 text-xl font-bold text-primary">
-                        {" "}
-                        <BiPlusCircle className="w-5 h-5 text-green-500" />
-                      </span>
-                    </div>
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+                    <button
+                      onClick={openAddModal}
+                      className="bg-secondary/30 border-l-5 border-r-5 border-green-500 rounded-lg shadow-md p-6 w-full self-center flex flex-row items-center justify-center gap-3 hover:cursor-pointer hover:bg-secondary/50 transition-all group"
+                    >
+                      <div className="flex flex-col items-center">
+                        <span className="flex flex-row items-center gap-1 text-xl font-bold text-primary">
+                          {" "}
+                          <BiPlusCircle className="w-5 h-5 text-green-500" />
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <Footer />
+
+          <AddAccountModal
+            isOpen={isAddModalOpen}
+            onClose={closeAddModal}
+            onSubmit={handleAddAccount}
+          />
+
+          <AccountDetailsModal
+            isOpen={isDetailsModalOpen}
+            onClose={closeDetailsModal}
+            account={selectedAccount}
+            onSave={handleSaveAccount}
+            onDelete={handleDeleteAccount}
+            onRefresh={handleRefreshAccount}
+          />
         </div>
-
-        <Footer />
-
-        <AddAccountModal
-          isOpen={isAddModalOpen}
-          onClose={closeAddModal}
-          onSubmit={handleAddAccount}
-        />
-
-        <AccountDetailsModal
-          isOpen={isDetailsModalOpen}
-          onClose={closeDetailsModal}
-          account={selectedAccount}
-          onSave={handleSaveAccount}
-          onDelete={handleDeleteAccount}
-          onRefresh={handleRefreshAccount}
-        />
-      </div>
+      </ChampionProvider>
     </ThemeProvider>
   );
 }

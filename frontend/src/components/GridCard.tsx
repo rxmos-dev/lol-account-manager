@@ -3,11 +3,9 @@ import { AccountData } from "../utils/accountsManager";
 import {
   formatEloData,
   getTierBorderColor,
-  getChampionIcon,
-  calculateMasteryWinrate,
   formatRoleName,
-  getChampionNameById,
-} from "../App";
+} from "../utils/gameUtils";
+import { useChampion } from "../contexts/ChampionContext";
 import { TbLoader2 } from "react-icons/tb";
 
 interface GridCardProps {
@@ -19,6 +17,8 @@ interface GridCardProps {
 }
 
 const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, isLoadingElo }) => {
+  const { getChampionNameById, getChampionIcon } = useChampion();
+  
   // Função para verificar se os dados estão atualizados (últimas 24h)
   const isDataFresh = () => {
     if (!account.lastUpdated) return false;

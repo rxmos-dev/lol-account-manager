@@ -115,25 +115,15 @@ export const sortAccountsByElo = (accounts: AccountData[]): AccountData[] => {
 };
 
 // Função para obter o nome do campeão pelo ID
-export const getChampionNameById = (championMap: { [key: string]: string }) => (championId: number): string => {
+export const getChampionNameById = (championId: number, championMap: { [key: string]: string } = {}): string => {
   return championMap[championId] || "?";
 };
 
 // Função para obter o ícone do campeão baseado no championId
-export const getChampionIcon = (championMap: { [key: string]: string }) => (championId: number): string => {
+export const getChampionIcon = (championId: number, championMap: { [key: string]: string } = {}): string => {
   const championName = championMap[championId] || "?";
   if (!championName || championName === "?") {
-    return getFallbackChampionIcon(); // fallback
+    return "https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/Ashe.png"; // fallback
   }
-  return `https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/${championName}.png`;
-};
-
-// Função para obter ícone de fallback (Ahri)
-export const getFallbackChampionIcon = (): string => {
-  return "https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/Ahri.png";
-};
-
-// Função para obter ícone de um campeão específico por nome
-export const getChampionIconByName = (championName: string): string => {
-  return `https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/${championName}.png`;
+  return `https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/${championName}.png`;
 };

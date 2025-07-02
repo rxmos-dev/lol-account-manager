@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { HiMoon, HiSun } from "react-icons/hi";
 import { useTheme } from "../contexts/ThemeContext";
 import { SiLeagueoflegends } from "react-icons/si";
 import { PiGearBold } from "react-icons/pi";
 import { IoMdClose } from "react-icons/io";
-import { BsFillHeartFill, BsTranslate } from "react-icons/bs";
+import { BsTranslate } from "react-icons/bs";
 import { HiChevronDown } from "react-icons/hi";
 import SettingsModal from "./SettingsModal";
 import { LuMaximize2 } from "react-icons/lu";
@@ -67,7 +67,7 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="bg-secondary px-2 py-1 border-b border-border shadow-sm justify-between flex items-center drag-region">
+    <nav className="bg-secondary p-2.5 border-b border-border shadow-sm justify-between flex items-center drag-region">
       <div className="flex font-semibold items-center text-foreground gap-2 text-sm">
         <SiLeagueoflegends />
         <p>ACCOUNT MANAGER</p>
@@ -75,18 +75,13 @@ const Navbar = () => {
       </div>
 
       <div className="flex items-center justify-between gap-2 no-drag">
-        <button className="flex shadow-sm items-center text-foreground gap-2 bg-sidebar hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors animate-pulse">
-          <BsFillHeartFill className="w-3 h-3 text-red-500" />
-          <p className="text-xs font-bold">DONATE</p>
-        </button>
-
         <div
           className="relative"
           ref={languageMenuRef}
         >
           <button
             onClick={toggleLanguageMenu}
-            className="flex shadow-sm items-center text-foreground gap-2 bg-sidebar hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
+            className="flex shadow-sm items-center text-foreground gap-2 border border-foreground/20 hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
           >
             <BsTranslate className="w-3 h-3" />
             <HiChevronDown className={`w-3 h-3 transition-transform ${isLanguageMenuOpen ? "rotate-180" : ""}`} />
@@ -118,7 +113,7 @@ const Navbar = () => {
 
         <button
           onClick={toggleTheme}
-          className="flex shadow-sm items-center text-foreground gap-2 bg-sidebar hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
+          className="flex shadow-sm items-center text-foreground gap-2 border-1 border-foreground/20 hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
           title={`Alternar para modo ${theme === "dark" ? "claro" : "escuro"}`}
         >
           {theme === "dark" ? <HiSun className="w-3 h-3" /> : <HiMoon className="w-3 h-3" />}
@@ -126,27 +121,27 @@ const Navbar = () => {
 
         <button
           onClick={() => setIsSettingsModalOpen(true)}
-          className="flex shadow-sm items-center text-foreground gap-2 bg-sidebar hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
+          className="flex shadow-sm items-center text-foreground gap-2 border border-foreground/20 hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
         >
           <PiGearBold className="w-3 h-3" />
         </button>
 
-        <div className="flex flex-row gap-2 items-center border border-foreground/20 rounded-md ml-5">
+        <div className="flex flex-row gap-2 items-center border border-foreground/20 rounded-md py-0.5">
           <button
             onClick={handleMinimizeApp}
-            className="flex shadow-sm items-center text-foreground gap-2  p-2 hover:cursor-pointer hover:bg-background/50 rounded-md transition-all"
+            className="flex items-center text-foreground gap-2 p-2 hover:cursor-pointer hover:bg-background/50 rounded-md transition-all"
           >
             <MdMinimize className="w-3 h-3 " />
           </button>
           <button
             onClick={handleMaximizeApp}
-            className="flex shadow-sm items-center text-foreground gap-2  p-2 hover:cursor-pointer hover:bg-background/50 rounded-md transition-all"
+            className="flex items-center text-foreground gap-2 p-2 hover:cursor-pointer hover:bg-background/50 rounded-md transition-all"
           >
             <LuMaximize2 className="w-3 h-3" />
           </button>
           <button
             onClick={handleCloseApp}
-            className="flex shadow-sm items-center text-foreground gap-2  p-2 hover:cursor-pointer hover:bg-red-600 rounded-md transition-all"
+            className="flex items-center text-foreground gap-2 p-2 hover:cursor-pointer hover:bg-red-600 rounded-md transition-all"
           >
             <IoMdClose className="w-3 h-3" />
           </button>

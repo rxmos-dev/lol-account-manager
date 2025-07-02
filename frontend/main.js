@@ -507,7 +507,9 @@ const getAccountsFilePath = () => {
 };
 
 ipcMain.handle('get-accounts-path', async () => {
-  return getAccountsFilePath();
+  const fullPath = getAccountsFilePath();
+  console.log('Caminho atual do accounts.json:', fullPath);
+  return fullPath;
 });
 
 ipcMain.handle('set-accounts-path', async (event, newPath) => {
@@ -590,6 +592,27 @@ ipcMain.handle('reset-accounts-path', async () => {
     return { success: true, defaultPath };
   } catch (error) {
     console.error('Erro ao resetar caminho:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('open-accounts-folder', async () => {
+  try {
+    const accountsFilePath = getAccountsFilePath();
+    const dir = path.dirname(accountsFilePath);
+    
+    // Verifica se o diretório existe
+    if (!fs.existsSync(dir)) {
+      return { success: false, error: 'Diretório não encontrado' };
+    }
+    
+    // Abre o explorador de arquivos na pasta do arquivo
+    const { shell } = await import('electron');
+    await shell.showItemInFolder(accountsFilePath);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Erro ao abrir pasta:', error);
     return { success: false, error: error.message };
   }
 });
@@ -731,8 +754,13 @@ ipcMain.handle('quit-and-install', () => {
 ipcMain.handle('get-update-status', () => {
   return {
     isUpdateAvailable: autoUpdater.updateAvailable,
-    isUpdateDownloaded: autoUpdater.updateDownloaded
+    isUpdateDownloaded: autoUpdater.updateDownloaded,
+    autoUpdateEnabled: true // Sempre habilitado
   };
+});
+
+ipcMain.handle('get-auto-update-enabled', () => {
+  return true; // Sempre habilitado
 });
 
 // Carrega configuração na inicialização
@@ -747,6 +775,15 @@ const loadConfig = () => {
       if (config.leaguePath) {
         customLeaguePath = config.leaguePath;
       }
+      // Sempre força auto-update para habilitado
+      config.autoUpdateEnabled = true;
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    } else {
+      // Cria arquivo de configuração com auto-update habilitado
+      const defaultConfig = {
+        autoUpdateEnabled: true
+      };
+      fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2));
     }
   } catch (error) {
     console.error('Erro ao carregar configuração:', error);
@@ -761,6 +798,11 @@ app.whenReady().then(() => {
   setTimeout(() => {
     autoUpdater.checkForUpdatesAndNotify();
   }, 3000); // Wait 3 seconds before checking for updates
+  
+  // Check for updates every 30 minutes (1800000 ms)
+  setInterval(() => {
+    autoUpdater.checkForUpdatesAndNotify();
+  }, 1800000);
 });
 
 app.on('window-all-closed', () => {

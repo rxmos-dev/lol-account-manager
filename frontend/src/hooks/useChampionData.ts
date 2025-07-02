@@ -22,7 +22,7 @@ export const useChampionData = () => {
       setIsLoading(true);
       setError(null);
       const response = await axios.get(
-        "https://ddragon.leagueoflegends.com/cdn/15.12.1/data/en_US/champion.json"
+        "https://ddragon.leagueoflegends.com/cdn/15.13.1/data/en_US/champion.json"
       );
       const champions: ChampionData = response.data.data;
       const newChampionMap: { [key: string]: string } = {};
@@ -32,6 +32,7 @@ export const useChampionData = () => {
       }
       
       setChampionMap(newChampionMap);
+      console.log('Champion data loaded:', Object.keys(newChampionMap).length, 'champions');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao buscar dados dos campeões');
       console.error("Error fetching champion data:", err);
@@ -49,9 +50,9 @@ export const useChampionData = () => {
   const getChampionIcon = useCallback((championId: number): string => {
     const championName = getChampionNameById(championId);
     if (!championName || championName === "?") {
-      return "https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/Ashe.png"; // fallback
+      return "https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/Ashe.png"; // fallback
     }
-    return `https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/${championName}.png`;
+    return `https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/${championName}.png`;
   }, [getChampionNameById]);
 
   // Calcula winrate simulado baseado nos pontos de maestria

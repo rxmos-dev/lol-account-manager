@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { BiCheck, BiX, BiFolder, BiRefresh, BiPlay, BiDownload } from "react-icons/bi";
-import { BsInfoCircleFill } from "react-icons/bs";
+import { BiCheck, BiX, BiFolder, BiRefresh, BiPlay, BiDownload, BiInfoCircle, BiMedal } from "react-icons/bi";
+import { BsEyeFill, BsInfoCircleFill } from "react-icons/bs";
+import { GiSparkles } from "react-icons/gi";
+import { LuFolderSearch } from "react-icons/lu";
 import { PiGearBold } from "react-icons/pi";
+import { RiSparkling2Line } from "react-icons/ri";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,7 +14,7 @@ interface SettingsModalProps {
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [accountsPath, setAccountsPath] = useState("");
   const [leaguePath, setLeaguePath] = useState("");
-  const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(false);
+  const [autoUpdateEnabled] = useState(true); // Sempre habilitado
 
   // Auto-updater states
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
@@ -28,7 +31,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
       // Setup auto-updater event listeners
       try {
-        const { ipcRenderer } = window.require("electron");
+        const { ipcRenderer } = window.electron;
 
         const handleUpdateAvailable = () => {
           setIsUpdateAvailable(true);
@@ -38,7 +41,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           setIsUpdateAvailable(false);
         };
 
-        const handleDownloadProgress = (event: any, progress: any) => {
+        const handleDownloadProgress = (_event: any, progress: any) => {
           setDownloadProgress(progress.percent);
         };
 
@@ -46,7 +49,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           setIsUpdateDownloaded(true);
         };
 
-        const handleUpdaterError = (event: any, error: any) => {
+        const handleUpdaterError = (_event: any, error: any) => {
           setUpdateError(error.message || "Erro no auto-updater");
         };
 
@@ -73,9 +76,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const loadCurrentPath = async () => {
     try {
-      const { ipcRenderer } = window.require("electron");
+      const { ipcRenderer } = window.electron;
       const currentPath = await ipcRenderer.invoke("get-accounts-path");
       setAccountsPath(currentPath || "");
+
+      // Se não há caminho customizado definido, mostra o caminho padrão onde as contas estão
+      if (!currentPath) {
+        console.log("Caminho padrão sendo usado para accounts.json");
+      }
     } catch (error) {
       console.error("Erro ao carregar caminho atual:", error);
     }
@@ -83,7 +91,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const loadLeaguePath = async () => {
     try {
-      const { ipcRenderer } = window.require("electron");
+      const { ipcRenderer } = window.electron;
       const currentPath = await ipcRenderer.invoke("get-league-path");
       setLeaguePath(currentPath || "C:\\Riot Games\\Riot Client\\RiotClientServices.exe");
     } catch (error) {
@@ -95,7 +103,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const handleSelectFolder = async () => {
     try {
-      const { ipcRenderer } = window.require("electron");
+      const { ipcRenderer } = window.electron;
       const result = await ipcRenderer.invoke("select-accounts-folder");
 
       if (result && !result.canceled) {
@@ -108,7 +116,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const handleSelectLeagueExe = async () => {
     try {
-      const { ipcRenderer } = window.require("electron");
+      const { ipcRenderer } = window.electron;
       const result = await ipcRenderer.invoke("select-league-exe");
 
       if (result && !result.canceled) {
@@ -121,7 +129,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const handlePlayLeague = async () => {
     try {
-      const { ipcRenderer } = window.require("electron");
+      const { ipcRenderer } = window.electron;
       const result = await ipcRenderer.invoke("launch-league", leaguePath);
 
       if (!result.success) {
@@ -135,7 +143,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const handleSave = async () => {
     try {
-      const { ipcRenderer } = window.require("electron");
+      const { ipcRenderer } = window.electron;
       const accountsResult = await ipcRenderer.invoke("set-accounts-path", accountsPath);
       const leagueResult = await ipcRenderer.invoke("set-league-path", leaguePath);
 
@@ -158,7 +166,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     setIsCheckingUpdate(true);
     setUpdateError(null);
     try {
-      const { ipcRenderer } = window.require("electron");
+      const { ipcRenderer } = window.electron;
       const result = await ipcRenderer.invoke("check-for-updates");
 
       if (result.success) {
@@ -176,7 +184,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const handleDownloadUpdate = async () => {
     try {
-      const { ipcRenderer } = window.require("electron");
+      const { ipcRenderer } = window.electron;
       await ipcRenderer.invoke("download-update");
     } catch (error) {
       console.error("Erro ao baixar atualização:", error);
@@ -186,7 +194,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const handleInstallUpdate = () => {
     try {
-      const { ipcRenderer } = window.require("electron");
+      const { ipcRenderer } = window.electron;
       ipcRenderer.invoke("quit-and-install");
     } catch (error) {
       console.error("Erro ao instalar atualização:", error);
@@ -194,17 +202,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleReset = async () => {
+  const handleOpenAccountsFolder = async () => {
     try {
-      const { ipcRenderer } = window.require("electron");
-      const result = await ipcRenderer.invoke("reset-accounts-path");
+      const { ipcRenderer } = window.electron;
+      const result = await ipcRenderer.invoke("open-accounts-folder");
 
-      if (result.success) {
-        setAccountsPath(result.defaultPath);
-        alert("Caminho resetado para o padrão!");
+      if (!result.success) {
+        alert(`Erro ao abrir pasta: ${result.error}`);
       }
     } catch (error) {
-      console.error("Erro ao resetar caminho:", error);
+      console.error("Erro ao abrir pasta:", error);
+      alert("Erro ao abrir pasta");
     }
   };
 
@@ -229,10 +237,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
         <div className="space-y-6">
           <>
-            <div className="flex flex-col mb-5 gap-1.5">
+            <div className="flex flex-col mb-2 gap-1">
               <label className="block text-sm font-bold text-primary">League of Legends Executable Path</label>
-              <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-30">
-                <BsInfoCircleFill className="w-3 h-3" />
+              <p className="flex flex-row items-center gap-1 text-[11px] text-foreground opacity-20">
+                <BiInfoCircle className="w-3 h-3" />
                 Path to RiotClientServices.exe to launch League of Legends.
               </p>
             </div>
@@ -242,7 +250,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 type="text"
                 value={leaguePath}
                 onChange={(e) => setLeaguePath(e.target.value)}
-                className="flex-1 p-3 bg-background/20 text-sm rounded-sm text-foreground"
+                className="flex-1 p-2 bg-background/20 text-sm rounded-sm text-foreground"
                 placeholder="C:\Riot Games\Riot Client\RiotClientServices.exe"
               />
 
@@ -252,7 +260,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 className="px-3 py-2 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
                 title="Select League executable"
               >
-                <BiFolder className="w-5 h-5" />
+                <LuFolderSearch className="w-4 h-4" />
               </button>
 
               <button
@@ -261,54 +269,67 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 className="px-3 py-2 bg-green-600/20 text-green-400 rounded-sm hover:bg-green-600/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
                 title="Launch League of Legends"
               >
-                <BiPlay className="w-5 h-5" />
+                <BiPlay className="w-4 h-4" />
               </button>
             </div>
           </>
 
           <>
-            <div className="flex flex-col mb-5 gap-1.5">
-              <label className="block text-sm font-bold text-primary">Folder to save accounts</label>
-              <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-30">
-                <BsInfoCircleFill className="w-3 h-3" />
+            <div className="flex flex-col mb-2 gap-1">
+              <label className="block text-sm font-bold text-primary">Accounts Storage</label>
+              <p className="flex flex-row items-center gap-1 text-[11px] text-foreground opacity-20">
+                <BiInfoCircle className="w-3 h-3" />
                 Keep calm all the passwords are encrypted and stored securely.
               </p>
             </div>
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={accountsPath}
-                onChange={(e) => setAccountsPath(e.target.value)}
-                className="flex-1 p-3 bg-background/20 text-sm rounded-sm text-foreground"
-                placeholder="Caminho do arquivo accounts.json"
-              />
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={accountsPath}
+                  onChange={(e) => setAccountsPath(e.target.value)}
+                  className="flex-1 p-2 bg-background/20 text-sm rounded-sm text-foreground"
+                  placeholder="Caminho do arquivo accounts.json"
+                />
 
-              <button
-                type="button"
-                onClick={handleReset}
-                className="px-3 py-2 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
-              >
-                <BiRefresh className="w-5 h-5" />
-              </button>
+                <button
+                  type="button"
+                  onClick={handleOpenAccountsFolder}
+                  className="px-3 py-2 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
+                  title="Abrir pasta do arquivo"
+                >
+                  <BsEyeFill className="w-4 h-4" />
+                </button>
 
-              <button
-                type="button"
-                onClick={handleSelectFolder}
-                className="px-3 py-2 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
-                title="Selecionar pasta"
-              >
-                <BiFolder className="w-5 h-5" />
+                <button
+                  type="button"
+                  onClick={handleSelectFolder}
+                  className="px-3 py-2 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
+                  title="Selecionar pasta"
+                >
+                  <BiFolder className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="font-normal text-xs">or you can </p>
+              <button className="animate-pulse flex items-center gap-2 text-xs w-full justify-between px-3 py-2 bg-sidebar text-foreground rounded-sm hover:opacity-80 transition-all hover:cursor-pointer">
+                <p className="text-[11px] text-primary ">Save accounts on cloud</p>
+
+                <div className="flex items-center justify-center gap-1 bg-blue-500 px-2 py-1 rounded-sm text-foreground text-[8px]">
+                  <BiMedal className="w-2 h-2" />
+                  PRO FEATURE
+                </div>
               </button>
             </div>
           </>
 
           <>
-            <div className="flex flex-col mb-5 gap-1.5">
-              <label className="block text-sm font-bold text-primary">Do you want to enable automatic updates?</label>
-              <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-30">
-                <BsInfoCircleFill className="w-3 h-3" />
-                All the updates will be downloaded automatically.
+            <div className="flex flex-col mb-2 gap-1">
+              <label className="block text-sm font-bold text-primary">Automatic Updates</label>
+              <p className="flex flex-row items-center gap-1 text-[11px] text-foreground opacity-20">
+                <BiInfoCircle className="w-3 h-3" />
+                Here you can check for updates, download and install them.
               </p>
             </div>
 
@@ -316,20 +337,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
               <input
                 type="checkbox"
                 checked={autoUpdateEnabled}
-                onChange={(e) => setAutoUpdateEnabled(e.target.checked)}
-                className="h-5 w-5 text-primary border-foreground/30 rounded-md focus:ring-0 hover:cursor-pointer transition-all"
+                disabled={true}
+                className="h-5 w-5 text-primary border-foreground/30 rounded-md focus:ring-0 cursor-not-allowed transition-all opacity-50"
               />
-              <span className="text-xs text-foreground">Enable Automatic Updates</span>
-            </div>
-          </>
-
-          <>
-            <div className="flex flex-col mb-5 gap-1.5">
-              <label className="block text-sm font-bold text-primary">Update Management</label>
-              <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-30">
-                <BsInfoCircleFill className="w-3 h-3" />
-                Check for updates manually or manage pending updates.
-              </p>
+              <span className="text-xs text-foreground">Keep up to date</span>
             </div>
 
             <div className="space-y-3">
@@ -364,7 +375,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   type="button"
                   onClick={handleCheckForUpdates}
                   disabled={isCheckingUpdate}
-                  className="flex-1 px-3 py-2 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center justify-center gap-2 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-3 py-2 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 text-xs transition-colors flex items-center justify-center gap-2 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <BiRefresh className={`w-4 h-4 ${isCheckingUpdate ? "animate-spin" : ""}`} />
                   {isCheckingUpdate ? "Checking..." : "Check for Updates"}

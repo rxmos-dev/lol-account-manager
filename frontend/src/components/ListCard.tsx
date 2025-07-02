@@ -1,7 +1,7 @@
 import React from "react";
 import { AccountData } from "../utils/accountsManager";
-import { formatEloData, getTierBorderColor, getChampionIcon, calculateMasteryWinrate, formatRoleName } from "../App";
-import { getChampionNameById } from "../App";
+import { formatEloData, getTierBorderColor, formatRoleName } from "../utils/gameUtils";
+import { useChampion } from "../contexts/ChampionContext";
 import { BiChevronRight } from "react-icons/bi";
 
 interface ListCardProps {
@@ -13,6 +13,8 @@ interface ListCardProps {
 }
 
 const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, isLoadingElo }) => {
+  const { getChampionNameById, getChampionIcon } = useChampion();
+  
   const eloInfo = formatEloData(account.eloData);
   
   // Função para verificar se os dados estão atualizados (últimas 24h)

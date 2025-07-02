@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { BiX, BiCopy, BiCheck, BiShow, BiHide, BiEdit, BiTrash, BiRefresh } from "react-icons/bi";
-import { BsInfoCircleFill, BsPlayBtn } from "react-icons/bs";
-import { AccountData, deleteAccount, forceUpdateAccount } from "../utils/accountsManager";
-import { formatEloData } from "../App"; // Importa a função de formatação de elo
+import { BiX, BiCopy, BiCheck, BiShow, BiHide, BiTrash, BiRefresh } from "react-icons/bi";
+import { BsInfoCircleFill } from "react-icons/bs";
+import { AccountData } from "../utils/accountsManager";
+import { formatEloData } from "../utils/gameUtils";
 import { FaPlay } from "react-icons/fa";
 import { CgSpinner } from "react-icons/cg";
+import { FiMoreHorizontal } from "react-icons/fi";
 
 interface AccountDetailsModalProps {
   isOpen: boolean;
@@ -15,7 +16,14 @@ interface AccountDetailsModalProps {
   onRefresh?: (accountToRefresh: AccountData) => void;
 }
 
-const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClose, account, onSave, onDelete, onRefresh }) => {
+const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
+  isOpen,
+  onClose,
+  account,
+  onSave,
+  onDelete,
+  onRefresh,
+}) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [editableAccount, setEditableAccount] = useState<AccountData | null>(null);
@@ -23,6 +31,7 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
   const [leaguePath, setLeaguePath] = useState("");
   const [isLaunching, setIsLaunching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
   const handlePlayLeague = async () => {
     setIsLaunching(true);
@@ -71,6 +80,24 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
     }
   }, [account, isOpen]);
 
+  // Fecha o menu quando clicar fora dele
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (showOptionsMenu && !target.closest(".options-menu-container")) {
+        setShowOptionsMenu(false);
+      }
+    };
+
+    if (showOptionsMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showOptionsMenu]);
+
   const handleInputChange = (field: keyof AccountData, value: string) => {
     if (editableAccount) {
       setEditableAccount({ ...editableAccount, [field]: value });
@@ -100,7 +127,7 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
 
   const handleRefresh = async () => {
     if (!account || !onRefresh) return;
-    
+
     setIsRefreshing(true);
     try {
       onRefresh(account);
@@ -131,25 +158,45 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
           </div>
         )}
         <div className={`flex items-center justify-end gap-2 ${hasUnsavedChanges ? "mt-8" : ""}`}>
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="rounded-md p-2 text-blue-400 hover:text-blue-600 transition-colors hover:cursor-pointer hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Refresh account data"
-            title="Atualizar dados da conta"
-          >
-            <BiRefresh className={isRefreshing ? "animate-spin" : ""} />
-          </button>
-          
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="rounded-md top-3 right-3 text-lg p-2 text-red-400 hover:text-red-600 transition-colors hover:cursor-pointer hover:bg-background"
-            aria-label="Delete account"
-          >
-            <BiTrash />
-          </button>
+          <div className="relative options-menu-container">
+            <button
+              type="button"
+              onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+              className="rounded-md p-2 bg-sidebar transition-colors hover:cursor-pointer hover:bg-background"
+              aria-label="Options menu"
+              title="Menu de opções"
+            >
+              <FiMoreHorizontal />
+            </button>
+
+            {showOptionsMenu && (
+              <div className="absolute left-0 top-full mt-1 bg-sidebar rounded-sm shadow-lg z-10 min-w-[120px]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleRefresh();
+                    setShowOptionsMenu(false);
+                  }}
+                  disabled={isRefreshing}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-t-lg hover:cursor-pointer"
+                >
+                  <BiRefresh className={isRefreshing ? "animate-spin" : ""} />
+                  Refresh
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleDelete();
+                    setShowOptionsMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-400 hover:text-red-600 hover:bg-background transition-colors rounded-b-lg hover:cursor-pointer"
+                >
+                  <BiTrash />
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
 
           <button
             type="button"
@@ -169,7 +216,7 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
               </div>
               {account.lastUpdated && (
                 <p className="text-[10px] text-foreground opacity-30">
-                  Última atualização: {new Date(account.lastUpdated).toLocaleString('pt-BR')}
+                  Última atualização: {new Date(account.lastUpdated).toLocaleString("pt-BR")}
                 </p>
               )}
             </div>
@@ -188,72 +235,6 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
           </div>
         </div>
         <div className="space-y-4">
-          <div>
-            <div className="flex flex-col mb-2 gap-1">
-              <label className="block text-sm font-bold text-primary">Username</label>
-              <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-50">
-                <BsInfoCircleFill />
-                Edit the username or use the copy button
-              </p>
-            </div>
-            <div className="flex gap-2 justify-between items-center">
-              <input
-                type="text"
-                value={editableAccount.username}
-                onChange={(e) => handleInputChange("username", e.target.value)}
-                className="flex-1 p-3 bg-background/20 text-sm rounded-sm text-foreground border border-transparent focus:border-primary/50 focus:outline-none"
-              />
-              <button
-                onClick={() => copyToClipboard(editableAccount.username, "username")}
-                className="h-[46px] px-4 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
-                title="Copiar username"
-              >
-                {copiedField === "username" ? (
-                  <BiCheck className="w-4 h-4 text-green-500" />
-                ) : (
-                  <BiCopy className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Password */}
-          <div>
-            <div className="flex flex-col mb-2 gap-1">
-              <label className="block text-sm font-bold text-primary">Password</label>
-              <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-50">
-                <BsInfoCircleFill />
-                Edit the password or use the copy button
-              </p>
-            </div>
-            <div className="flex gap-2 justify-between items-center">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={editableAccount.password}
-                onChange={(e) => handleInputChange("password", e.target.value)}
-                className="flex-1 p-3 bg-background/20 text-sm rounded-sm text-foreground border border-transparent focus:border-primary/50 focus:outline-none"
-              />
-              <button
-                onClick={() => setShowPassword(!showPassword)}
-                className="h-[46px] px-4 bg-background/20 text-foreground rounded-sm hover:bg-background/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
-                title={showPassword ? "Ocultar senha" : "Mostrar senha"}
-              >
-                {showPassword ? <BiHide className="w-4 h-4" /> : <BiShow className="w-4 h-4" />}
-              </button>
-              <button
-                onClick={() => copyToClipboard(editableAccount.password, "password")}
-                className="h-[46px] px-4 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
-                title="Copiar senha"
-              >
-                {copiedField === "password" ? (
-                  <BiCheck className="w-4 h-4 text-green-500" />
-                ) : (
-                  <BiCopy className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
           {/* Riot ID */}
           <div>
             <div className="flex flex-col mb-2 gap-1">
@@ -301,9 +282,75 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
               <button
                 onClick={() => copyToClipboard(`${editableAccount.summonerName}#${editableAccount.tagline}`, "riotId")}
                 className="h-[46px] px-4 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
-                title="Copiar Riot ID"
+                title="Copy Riot ID"
               >
                 {copiedField === "riotId" ? (
+                  <BiCheck className="w-4 h-4 text-green-500" />
+                ) : (
+                  <BiCopy className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex flex-col mb-2 gap-1">
+              <label className="block text-sm font-bold text-primary">Username</label>
+              <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-50">
+                <BsInfoCircleFill />
+                Edit the username or use the copy button
+              </p>
+            </div>
+            <div className="flex gap-2 justify-between items-center">
+              <input
+                type="text"
+                value={editableAccount.username}
+                onChange={(e) => handleInputChange("username", e.target.value)}
+                className="flex-1 p-3 bg-background/20 text-sm rounded-sm text-foreground border border-transparent focus:border-primary/50 focus:outline-none"
+              />
+              <button
+                onClick={() => copyToClipboard(editableAccount.username, "username")}
+                className="h-[46px] px-4 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
+                title="Copy username"
+              >
+                {copiedField === "username" ? (
+                  <BiCheck className="w-4 h-4 text-green-500" />
+                ) : (
+                  <BiCopy className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Password */}
+          <div>
+            <div className="flex flex-col mb-2 gap-1">
+              <label className="block text-sm font-bold text-primary">Password</label>
+              <p className="flex flex-row items-center gap-1 text-xs text-foreground opacity-50">
+                <BsInfoCircleFill />
+                Edit the password or use the copy button
+              </p>
+            </div>
+            <div className="flex gap-2 justify-between items-center">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={editableAccount.password}
+                onChange={(e) => handleInputChange("password", e.target.value)}
+                className="flex-1 p-3 bg-background/20 text-sm rounded-sm text-foreground border border-transparent focus:border-primary/50 focus:outline-none"
+              />
+              <button
+                onClick={() => setShowPassword(!showPassword)}
+                className="h-[46px] px-4 bg-background/20 text-foreground rounded-sm hover:bg-background/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
+                title={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? <BiHide className="w-4 h-4" /> : <BiShow className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={() => copyToClipboard(editableAccount.password, "password")}
+                className="h-[46px] px-4 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
+                title="Copy senha"
+              >
+                {copiedField === "password" ? (
                   <BiCheck className="w-4 h-4 text-green-500" />
                 ) : (
                   <BiCopy className="w-4 h-4" />
@@ -321,30 +368,28 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
           </div>
         )}{" "}
         <div>
-            <button
+          <button
             onClick={hasUnsavedChanges ? handleSave : handlePlayLeague}
             disabled={isLaunching}
             className={`w-full mt-8 flex justify-center py-3 rounded-sm transition-colors text-background hover:cursor-pointer ${
-              hasUnsavedChanges
-              ? "bg-foreground hover:bg-primary/80"
-              : "bg-green-500 hover:opacity-85 text-foreground"
+              hasUnsavedChanges ? "bg-foreground hover:bg-primary/80" : "bg-green-700 hover:opacity-85 text-foreground"
             } ${isLaunching ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
+          >
             <span className="text-xs">
               {hasUnsavedChanges ? (
-              "Save Changes"
+                "Save Changes"
               ) : isLaunching ? (
-              <div className="flex items-center gap-2 flex-row">
-                <CgSpinner className="animate-spin h-4 w-4" />
-              </div>
+                <div className="flex items-center gap-2 flex-row">
+                  <CgSpinner className="animate-spin h-4 w-4" />
+                </div>
               ) : (
-              <div className="flex items-center gap-2 flex-row">
-                <FaPlay />
-                <p>PLAY</p>
-              </div>
+                <div className="flex items-center gap-2 flex-row">
+                  <FaPlay />
+                  <p>PLAY</p>
+                </div>
               )}
             </span>
-            </button>
+          </button>
         </div>
       </div>
     </div>
