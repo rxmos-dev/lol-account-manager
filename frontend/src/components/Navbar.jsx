@@ -10,7 +10,7 @@ import SettingsModal from "./SettingsModal";
 import { LuMaximize2 } from "react-icons/lu";
 import { MdMinimize } from "react-icons/md";
 
-const { ipcRenderer } = window.require("electron");
+const { ipcRenderer } = window.electron;
 
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();

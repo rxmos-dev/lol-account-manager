@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { BiX, BiCopy, BiCheck, BiShow, BiHide, BiEdit, BiTrash } from "react-icons/bi";
+import { BiX, BiCopy, BiCheck, BiShow, BiHide, BiEdit, BiTrash, BiRefresh } from "react-icons/bi";
 import { BsInfoCircleFill, BsPlayBtn } from "react-icons/bs";
-import { AccountData, deleteAccount } from "../utils/accountsManager";
+import { AccountData, deleteAccount, forceUpdateAccount } from "../utils/accountsManager";
 import { formatEloData } from "../App"; // Importa a função de formatação de elo
 import { FaPlay } from "react-icons/fa";
 import { CgSpinner } from "react-icons/cg";
@@ -12,15 +12,17 @@ interface AccountDetailsModalProps {
   account: AccountData | null;
   onSave?: (updatedAccount: AccountData) => void;
   onDelete?: (accountToDelete: AccountData) => void;
+  onRefresh?: (accountToRefresh: AccountData) => void;
 }
 
-const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClose, account, onSave, onDelete }) => {
+const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClose, account, onSave, onDelete, onRefresh }) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [editableAccount, setEditableAccount] = useState<AccountData | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [leaguePath, setLeaguePath] = useState("");
   const [isLaunching, setIsLaunching] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handlePlayLeague = async () => {
     setIsLaunching(true);
@@ -96,6 +98,19 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
     }
   };
 
+  const handleRefresh = async () => {
+    if (!account || !onRefresh) return;
+    
+    setIsRefreshing(true);
+    try {
+      onRefresh(account);
+    } catch (error) {
+      console.error("Erro ao atualizar dados da conta:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const handleClose = () => {
     if (hasUnsavedChanges) {
       const confirm = window.confirm("You have unsaved changes. Are you sure you want to close without saving?");
@@ -118,6 +133,17 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
         <div className={`flex items-center justify-end gap-2 ${hasUnsavedChanges ? "mt-8" : ""}`}>
           <button
             type="button"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="rounded-md p-2 text-blue-400 hover:text-blue-600 transition-colors hover:cursor-pointer hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Refresh account data"
+            title="Atualizar dados da conta"
+          >
+            <BiRefresh className={isRefreshing ? "animate-spin" : ""} />
+          </button>
+          
+          <button
+            type="button"
             onClick={handleDelete}
             className="rounded-md top-3 right-3 text-lg p-2 text-red-400 hover:text-red-600 transition-colors hover:cursor-pointer hover:bg-background"
             aria-label="Delete account"
@@ -136,9 +162,16 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({ isOpen, onClo
         </div>
         <div className="text-start flex flex-col gap-3 my-4">
           <div className="flex flex-row gap-2 items-center border-b border-foreground/10 pb-5">
-            <div className="flex flex-row items-baseline gap-1">
-              <h1 className="text-xl font-bold">{account.summonerName}</h1>
-              <p className="text-[10px] text-foreground opacity-50">#{account.tagline}</p>
+            <div className="flex flex-col">
+              <div className="flex flex-row items-baseline gap-1">
+                <h1 className="text-xl font-bold">{account.summonerName}</h1>
+                <p className="text-[10px] text-foreground opacity-50">#{account.tagline}</p>
+              </div>
+              {account.lastUpdated && (
+                <p className="text-[10px] text-foreground opacity-30">
+                  Última atualização: {new Date(account.lastUpdated).toLocaleString('pt-BR')}
+                </p>
+              )}
             </div>
 
             <p className="text-xs text-foreground opacity-50 ml-auto">

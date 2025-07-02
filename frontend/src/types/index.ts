@@ -79,3 +79,29 @@ export interface UpdateStatus {
   updateInfo?: UpdateInfo;
   downloadProgress?: number;
 }
+
+export interface Account {
+  username: string;
+  password?: string;
+  server: string;
+  puuid?: string;
+  championMasteriesData?: ChampionMastery[];
+  summonerLaneData?: SummonerLaneData;
+}
+
+export interface ChampionMastery {
+  championId: number;
+  championLevel: number;
+  championPoints: number;
+  lastPlayTime: number;
+  championPointsSinceLastLevel: number;
+  championPointsUntilNextLevel: number;
+  chestGranted: boolean;
+  tokensEarned: number;
+  summonerId: string;
+}
+
+export interface SummonerLaneData {
+  lane: string;
+  games: number;
+}

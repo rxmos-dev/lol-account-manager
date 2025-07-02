@@ -74,9 +74,7 @@ function createWindow() {
     frame: false,
     maximizable: true,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      webSecurity: false,
+      preload: path.join(__dirname, "preload.js"),
     },
   });
 
@@ -372,31 +370,24 @@ let championCache = null;
 
 ipcMain.handle('get-champion-data', async (event, credentials) => {
   if (!credentials) return null;
-  
+
+  if (championCache) {
+    return championCache;
+  }
+
   try {
-    const auth = Buffer.from(`riot:${credentials.password}`).toString('base64');
-    const fetch = (await import('node-fetch')).default;
-    
-    const response = await fetch(`https://127.0.0.1:${credentials.port}/lol-game-data/assets/v1/champions.json`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Accept': 'application/json',
-      },
-      agent: new (await import('https')).Agent({
-        rejectUnauthorized: false
-      })
-    });
-    
-    if (response.ok) {
-      championCache = await response.json();
+    const axiosInstance = createAxiosInstance(credentials);
+    const response = await axiosInstance.get(`https://127.0.0.1:${credentials.port}/lol-game-data/assets/v1/champions.json`);
+
+    if (response.status === 200) {
+      championCache = response.data;
       return championCache;
     }
-    
+
     return null;
   } catch (error) {
     console.error('Erro ao obter dados dos campeões:', error);
-    return championCache;
+    return null;
   }
 });
 

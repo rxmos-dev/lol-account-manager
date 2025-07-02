@@ -1,251 +1,113 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import Navbar from "./components/Navbar";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { BiPlus, BiPlusCircle, BiGridAlt, BiListUl } from "react-icons/bi";
+import { BiPlus, BiPlusCircle, BiGridAlt, BiListUl, BiRefresh } from "react-icons/bi";
 import AddAccountModal from "./components/AddAccountModal";
 import AccountDetailsModal from "./components/AccountDetailsModal";
 import GridCard from "./components/GridCard";
 import ListCard from "./components/ListCard";
-import { saveAccounts, loadAccounts, AccountData, updateAccountsWithPuuids, ChampionMastery } from "./utils/accountsManager";
+import { AccountData } from "./utils/accountsManager";
 import Footer from "./components/Footer";
-import axios from "axios";
+import { 
+  useAccounts, 
+  useEloData, 
+  useViewMode, 
+  useModals 
+} from "./hooks";
+import { getFallbackChampionIcon } from "./utils/gameUtils";
 
-// Mapeamento de championId para nome do campeão
-let championMap: { [key: string]: string } = {}
-
-// Função para buscar e processar os dados dos campeões
-export const fetchChampionData = async () => {
-  try {
-    const response = await axios.get("https://ddragon.leagueoflegends.com/cdn/15.12.1/data/en_US/champion.json");
-    const champions = response.data.data;
-    for (const key in champions) {
-      championMap[champions[key].key] = champions[key].name;
-    }
-  } catch (error) {
-    console.error("Error fetching champion data:", error);
-  }
-}
-
-// Função para obter o nome do campeão pelo ID
-export const getChampionNameById = (championId: number): string => {
-  return championMap[championId] || "?";
-};
-
-// Função para obter o ícone do campeão baseado no championId
-export const getChampionIcon = (championId: number): string => {
-  const championName = getChampionNameById(championId);
-  if (!championName || championName === "?") {
-    return "https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/Ashe.png"; // fallback
-  }
-  return `https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/${championName}.png`;
-};
-
-// Função para calcular winrate baseado nos pontos de maestria (mock)
-export const calculateMasteryWinrate = (championPoints: number): number => {
-  // Simulação de winrate baseada nos pontos de maestria
-  // Quanto mais pontos, maior a "experiência" com o campeão
-  if (championPoints < 10000) return Math.floor(Math.random() * 20) + 40; // 40-60%
-  if (championPoints < 50000) return Math.floor(Math.random() * 20) + 50; // 50-70%
-  if (championPoints < 100000) return Math.floor(Math.random() * 20) + 55; // 55-75%
-  return Math.floor(Math.random() * 20) + 60; // 60-80%
-};
-
-// Função para formatar o nome da role
-export const formatRoleName = (role: string): string => {
-  const roleMap: { [key: string]: string } = {
-    "TOP": "TOP",
-    "JUNGLE": "JNG", 
-    "MIDDLE": "MID",
-    "BOTTOM": "ADC",
-    "UTILITY": "SUP"
-  };
-  
-  return roleMap[role] || role;
-};
-
-// Função para formatar dados de elo
-export const formatEloData = (eloData: any) => {
-  if (!eloData || !eloData.elo || eloData.elo.length === 0) {
-    return { tier: "UNRANKED", rank: "", lp: 0 };
-  }
-
-  // Prioriza RANKED_SOLO_5x5, senão pega o primeiro
-  const soloQueue = eloData.elo.find((entry: any) => entry.queueType === "RANKED_SOLO_5x5");
-  const rankData = soloQueue || eloData.elo[0];
-
-  return {
-    tier: rankData.tier || "UNRANKED",
-    rank: rankData.rank || "",
-    lp: rankData.leaguePoints || 0,
-  };
-};
-
-// Função para determinar a cor da borda baseada no tier
-export const getTierBorderColor = (tier: string): string => {
-  switch (tier.toUpperCase()) {
-    case "IRON":
-      return "border-gray-600";
-    case "BRONZE":
-      return "border-amber-600";
-    case "SILVER":
-      return "border-gray-400";
-    case "GOLD":
-      return "border-yellow-400";
-    case "PLATINUM":
-      return "border-emerald-400";
-    case "EMERALD":
-      return "border-emerald-500";
-    case "DIAMOND":
-      return "border-blue-400";
-    case "MASTER":
-      return "border-purple-500";
-    case "GRANDMASTER":
-      return "border-red-500";
-    case "CHALLENGER":
-      return "border-amber-300";
-    default:
-      return "border-foreground";
-  }
-};
-
-// Função para ordenar contas por elo (do mais alto para o mais baixo)
-export const sortAccountsByElo = (accounts: AccountData[]): AccountData[] => {
-  const tierOrder = {
-    CHALLENGER: 8,
-    GRANDMASTER: 7,
-    MASTER: 6,
-    DIAMOND: 5,
-    EMERALD: 4,
-    PLATINUM: 3,
-    GOLD: 2,
-    SILVER: 1,
-    BRONZE: 0,
-    IRON: -1,
-    UNRANKED: -2,
-  };
-
-  const rankOrder = {
-    I: 4,
-    II: 3,
-    III: 2,
-    IV: 1,
-    "": 0,
-  };
-
-  return [...accounts].sort((a, b) => {
-    const eloA = formatEloData(a.eloData);
-    const eloB = formatEloData(b.eloData);
-
-    // Compara por tier primeiro
-    const tierDiff =
-      (tierOrder[eloB.tier as keyof typeof tierOrder] || -2) - (tierOrder[eloA.tier as keyof typeof tierOrder] || -2);
-
-    if (tierDiff !== 0) return tierDiff;
-
-    // Se o tier for o mesmo, compara por rank
-    const rankDiff =
-      (rankOrder[eloB.rank as keyof typeof rankOrder] || 0) - (rankOrder[eloA.rank as keyof typeof rankOrder] || 0);
-
-    if (rankDiff !== 0) return rankDiff;
-
-    // Se tier e rank forem iguais, compara por LP
-    return eloB.lp - eloA.lp;
-  });
-};
+// Re-exporta as funções utilitárias para uso em outros componentes
+export { 
+  calculateMasteryWinrate, 
+  formatRoleName, 
+  formatEloData, 
+  getTierBorderColor, 
+  sortAccountsByElo,
+  getChampionNameById,
+  getChampionIcon 
+} from "./utils/gameUtils";
 
 function App(): React.JSX.Element {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState<AccountData | null>(null);
-  const [accounts, setAccounts] = useState<AccountData[]>([]);
-  const [isLoadingElo, setIsLoadingElo] = useState(false);
-  const [ahriIcon, setAhriIcon] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
-    const saved = localStorage.getItem("accountViewMode");
-    return (saved as "grid" | "list") || "list";
-  });
+  // Hooks customizados
+  const { 
+    accounts, 
+    isLoading: isLoadingAccounts, 
+    loadInitialAccounts,
+    addAccount,
+    updateAccount: updateAccountData,
+    removeAccount,
+    forceUpdateSingleAccount,
+    forceUpdateAll,
+  } = useAccounts();
 
-  // Carrega as contas na inicialização
+  const { 
+    sortAccountsByElo,
+  } = useEloData();
+
+  const ahriIcon = getFallbackChampionIcon(); // Ícone de fallback
+  const { viewMode, setViewMode } = useViewMode('list');
+  const { 
+    isAddModalOpen, 
+    openAddModal, 
+    closeAddModal,
+    isDetailsModalOpen,
+    selectedAccount,
+    openDetailsModal,
+    closeDetailsModal 
+  } = useModals();
+
+  // Carrega dados iniciais
   useEffect(() => {
-    const init = async () => {
-      await fetchChampionData();
-      const loadedAccounts = await loadAccounts();
-      setAccounts(loadedAccounts);
-
-      // Busca PUUIDs e dados de elo para contas que não possuem
-      if (loadedAccounts.length > 0) {
-        setIsLoadingElo(true);
-        const accountsWithPuuids = await updateAccountsWithPuuids(loadedAccounts);
-        setAccounts(accountsWithPuuids);
-        // Salva as contas atualizadas com PUUIDs e elo
-        await saveAccounts(accountsWithPuuids);
-        setIsLoadingElo(false);
-      }
-    };
-    init();
-  }, []);
-
-  useEffect(() => {
-    // Busca o ícone da Ahri do DataDragon
-    fetch("https://ddragon.leagueoflegends.com/cdn/15.12.1/data/en_US/champion/Ahri.json")
-      .then((res) => res.json())
-      .then((data) => {
-        const iconName = data.data.Ahri.image.full;
-        setAhriIcon(`https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/${iconName}`);
-      });
-  }, []);
-
-  useEffect(() => {
-    // Salva no arquivo JSON sempre que mudar
-    if (accounts.length > 0) {
-      saveAccounts(accounts);
-    }
-  }, [accounts]);
-
-  // Salva a preferência de visualização
-  useEffect(() => {
-    localStorage.setItem("accountViewMode", viewMode);
-  }, [viewMode]);
+    loadInitialAccounts();
+  }, [loadInitialAccounts]);
 
   const handleAddAccount = async (accountData: AccountData) => {
-    // Busca o PUUID e dados de elo para a nova conta
-    setIsLoadingElo(true);
-    const accountsWithNewAccount = [...accounts, accountData];
-    const updatedAccounts = await updateAccountsWithPuuids(accountsWithNewAccount);
-    setAccounts(updatedAccounts);
-    await saveAccounts(updatedAccounts);
-    setIsLoadingElo(false);
-    console.log("Account added:", accountData);
+    try {
+      await addAccount(accountData);
+      console.log("Account added:", accountData);
+    } catch (error) {
+      console.error("Error adding account:", error);
+    }
   };
 
   const handleAccountClick = (account: AccountData) => {
-    setSelectedAccount(account);
-    setIsDetailsModalOpen(true);
+    openDetailsModal(account);
   };
 
-  const handleSaveAccount = (updatedAccount: AccountData) => {
-    const updatedAccounts = accounts.map((account) =>
-      account.summonerName === updatedAccount.summonerName && account.tagline === updatedAccount.tagline
-        ? updatedAccount
-        : account
-    );
-    setAccounts(updatedAccounts);
-    // A função saveAccounts será chamada automaticamente pelo useEffect
-    console.log("Account updated:", updatedAccount);
+  const handleSaveAccount = async (updatedAccount: AccountData) => {
+    try {
+      await updateAccountData(updatedAccount);
+      console.log("Account updated:", updatedAccount);
+    } catch (error) {
+      console.error("Error updating account:", error);
+    }
   };
 
-  const handleDeleteAccount = (accountToDelete: AccountData) => {
-    const updatedAccounts = accounts.filter(
-      (account) =>
-        !(
-          account.username === accountToDelete.username &&
-          account.summonerName === accountToDelete.summonerName &&
-          account.tagline === accountToDelete.tagline
-        )
-    );
-    setAccounts(updatedAccounts);
-    // A função saveAccounts será chamada automaticamente pelo useEffect
-    console.log("Account deleted:", accountToDelete);
+  const handleDeleteAccount = async (accountToDelete: AccountData) => {
+    try {
+      await removeAccount(accountToDelete);
+      console.log("Account deleted:", accountToDelete);
+    } catch (error) {
+      console.error("Error deleting account:", error);
+    }
+  };
+
+  const handleRefreshAccount = async (accountToRefresh: AccountData) => {
+    try {
+      await forceUpdateSingleAccount(accountToRefresh);
+      console.log("Account refreshed");
+    } catch (error) {
+      console.error("Error refreshing account:", error);
+    }
+  };
+
+  const handleRefreshAll = async () => {
+    try {
+      await forceUpdateAll();
+      console.log("All accounts refreshed");
+    } catch (error) {
+      console.error("Error refreshing all accounts:", error);
+    }
   };
 
   return (
@@ -263,7 +125,7 @@ function App(): React.JSX.Element {
               </p>
 
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={openAddModal}
                 className="flex flex-row items-center gap-2 mt-4 bg-primary text-background px-3 py-3 rounded-lg animate-pulse hover:cursor-pointer text-sm shadow-sm"
               >
                 <BiPlus />
@@ -280,31 +142,43 @@ function App(): React.JSX.Element {
                 </div>
                 <div className="flex flex-row gap-2">
                   <button
-                    onClick={() => setViewMode("grid")}
-                    className={`p-2.5 rounded-sm hover:cursor-pointer transition-all ${
-                      viewMode === "grid"
+                    onClick={handleRefreshAll}
+                    disabled={isLoadingAccounts}
+                    className="flex flex-row items-center justify-center gap-1 text-[10px] px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Atualizar todas as contas"
+                  >
+                    <BiRefresh className={isLoadingAccounts ? "animate-spin" : ""} />
+                    refresh
+                  </button>
+                  
+                  <button
+                    onClick={() => setViewMode("card")}
+                    className={`flex flex-row items-center justify-center gap-1 text-[10px] px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all ${
+                      viewMode === "card"
                         ? "bg-primary text-background shadow-lg"
                         : "bg-secondary text-primary hover:bg-secondary/80"
                     }`}
-                    title="Grid View"
+                    title="Card View"
                   >
-                    <BiGridAlt className="w-4 h-4" />
+                    <BiGridAlt />
+                    card
                   </button>
                   <button
                     onClick={() => setViewMode("list")}
-                    className={`p-2.5 rounded-sm hover:cursor-pointer transition-all ${
+                    className={`flex flex-row items-center justify-center gap-1 text-[10px] px-2.5 py-2 rounded-sm hover:cursor-pointer transition-all ${
                       viewMode === "list"
                         ? "bg-primary text-background shadow-lg"
                         : "bg-secondary text-primary hover:bg-secondary/80"
                     }`}
                     title="List View"
                   >
-                    <BiListUl className="w-4 h-4" />
+                    <BiListUl />
+                    list
                   </button>
                 </div>
               </div>
 
-              {viewMode === "grid" && (
+              {viewMode === "card" && (
                 <div className="w-full flex flex-wrap gap-4 justify-start items-start">
                   {sortAccountsByElo(accounts).map((account, index) => (
                     <GridCard
@@ -313,12 +187,12 @@ function App(): React.JSX.Element {
                       index={index}
                       onClick={handleAccountClick}
                       ahriIcon={ahriIcon}
-                      isLoadingElo={isLoadingElo}
+                      isLoadingElo={isLoadingAccounts}
                     />
                   ))}
 
                   <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={openAddModal}
                     className="bg-secondary/30 border-b-5 border-green-500 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-40 h-60 flex flex-col hover:cursor-pointer hover:border-b-0 transition-all duration-50"
                   >
                     <BiPlusCircle className="w-10 h-10 mb-1" />
@@ -336,12 +210,12 @@ function App(): React.JSX.Element {
                       index={index}
                       onClick={handleAccountClick}
                       ahriIcon={ahriIcon}
-                      isLoadingElo={isLoadingElo}
+                      isLoadingElo={isLoadingAccounts}
                     />
                   ))}
 
                   <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={openAddModal}
                     className="bg-secondary/30 border-l-5 border-r-5 border-green-500 rounded-lg shadow-md p-6 w-full self-center flex flex-row items-center justify-center gap-3 hover:cursor-pointer hover:bg-secondary/50 transition-all group"
                   >
                     <div className="flex flex-col items-center">
@@ -360,17 +234,18 @@ function App(): React.JSX.Element {
         <Footer />
 
         <AddAccountModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          isOpen={isAddModalOpen}
+          onClose={closeAddModal}
           onSubmit={handleAddAccount}
         />
 
         <AccountDetailsModal
           isOpen={isDetailsModalOpen}
-          onClose={() => setIsDetailsModalOpen(false)}
+          onClose={closeDetailsModal}
           account={selectedAccount}
           onSave={handleSaveAccount}
           onDelete={handleDeleteAccount}
+          onRefresh={handleRefreshAccount}
         />
       </div>
     </ThemeProvider>

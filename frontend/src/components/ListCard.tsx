@@ -15,14 +15,38 @@ interface ListCardProps {
 const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, isLoadingElo }) => {
   const eloInfo = formatEloData(account.eloData);
   
+  // Função para verificar se os dados estão atualizados (últimas 24h)
+  const isDataFresh = () => {
+    if (!account.lastUpdated) return false;
+    const now = Date.now();
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    return (now - account.lastUpdated) < twentyFourHours;
+  };
+
+  const getHoursFromUpdate = () => {
+    if (!account.lastUpdated) return 0;
+    const now = Date.now();
+    return Math.floor((now - account.lastUpdated) / (1000 * 60 * 60));
+  };
+  
   return (
     <div
       key={index}
       onClick={() => onClick(account)}
-      className={`bg-secondary border-l-5 rounded-lg shadow-md py-3 px-5 w-full flex flex-row items-center justify-between hover:cursor-pointer hover:border-l-0 transition-all duration-50 ${getTierBorderColor(
+      className={`bg-secondary border-l-5 rounded-lg shadow-md py-3 px-5 w-full flex flex-row items-center justify-between hover:cursor-pointer hover:border-l-0 transition-all duration-50 relative ${getTierBorderColor(
         eloInfo.tier
       )}`}
     >
+      {/* Indicador de cache */}
+      {account.lastUpdated && (
+        <div className="absolute top-3 right-3">
+          <div 
+            className={`w-2 h-2 rounded-full ${isDataFresh() ? 'bg-green-400' : 'bg-yellow-400'}`}
+            title={`Dados ${isDataFresh() ? 'atualizados' : 'desatualizados'} - ${getHoursFromUpdate()}h atrás`}
+          />
+        </div>
+      )}
+
       <div className="flex flex-row items-center gap-6">
         <div className="flex flex-col gap-1">
           <div className="flex flex-row items-baseline gap-1">
@@ -75,7 +99,7 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
               <>
                 <div className="flex flex-col items-center text-xs gap-1">
                   <img
-                    src={ahriIcon}
+                    src={ahriIcon || ""}
                     alt="Ahri Icon"
                     className="w-10 h-10 rounded-lg shadow-sm"
                   />
@@ -83,7 +107,7 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
                 </div>
                 <div className="flex flex-col items-center text-xs gap-1">
                   <img
-                    src={ahriIcon}
+                    src={ahriIcon || ""}
                     alt="Ahri Icon"
                     className="w-10 h-10 rounded-lg shadow-sm"
                   />
@@ -91,7 +115,7 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
                 </div>
                 <div className="flex flex-col items-center text-xs gap-1">
                   <img
-                    src={ahriIcon}
+                    src={ahriIcon || ""}
                     alt="Ahri Icon"
                     className="w-10 h-10 rounded-lg shadow-sm"
                   />
