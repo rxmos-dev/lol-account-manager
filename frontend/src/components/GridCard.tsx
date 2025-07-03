@@ -1,10 +1,6 @@
 import React from "react";
 import { AccountData } from "../utils/accountsManager";
-import {
-  formatEloData,
-  getTierBorderColor,
-  formatRoleName,
-} from "../utils/gameUtils";
+import { formatEloData, getTierBorderColor, formatRoleName } from "../utils/gameUtils";
 import { useChampion } from "../contexts/ChampionContext";
 import { TbLoader2 } from "react-icons/tb";
 
@@ -18,13 +14,13 @@ interface GridCardProps {
 
 const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, isLoadingElo }) => {
   const { getChampionNameById, getChampionIcon } = useChampion();
-  
+
   // Função para verificar se os dados estão atualizados (últimas 24h)
   const isDataFresh = () => {
     if (!account.lastUpdated) return false;
     const now = Date.now();
     const twentyFourHours = 24 * 60 * 60 * 1000;
-    return (now - account.lastUpdated) < twentyFourHours;
+    return now - account.lastUpdated < twentyFourHours;
   };
 
   const getHoursFromUpdate = () => {
@@ -37,16 +33,16 @@ const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, 
     <div
       key={index}
       onClick={() => onClick(account)}
-      className={`bg-secondary border-b-5 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-40 h-60 flex flex-col hover:cursor-pointer hover:border-b-0 transition-all duration-50 relative ${getTierBorderColor(
+      className={`bg-secondary border-b-5 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-50 h-70 flex flex-col hover:cursor-pointer hover:border-b-0 transition-all duration-50 relative ${getTierBorderColor(
         formatEloData(account.eloData).tier
       )}`}
     >
       {/* Indicador de cache */}
       {account.lastUpdated && (
         <div className="absolute top-2 right-2">
-          <div 
-            className={`w-2 h-2 rounded-full ${isDataFresh() ? 'bg-green-400' : 'bg-yellow-400'}`}
-            title={`Dados ${isDataFresh() ? 'atualizados' : 'desatualizados'} - ${getHoursFromUpdate()}h atrás`}
+          <div
+            className={`w-2 h-2 rounded-full ${isDataFresh() ? "bg-green-400" : "bg-yellow-400"}`}
+            title={`Dados ${isDataFresh() ? "atualizados" : "desatualizados"} - ${getHoursFromUpdate()}h atrás`}
           />
         </div>
       )}
@@ -61,10 +57,12 @@ const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, 
         {(() => {
           const eloInfo = formatEloData(account.eloData);
           return (
-            <p className="text-xs font-bold">
-              {eloInfo.tier === "UNRANKED" ? "UNRANKED" : `${eloInfo.tier} ${eloInfo.rank}`}
-              {eloInfo.lp > 0 && ` ${eloInfo.lp} LP`}
-            </p>
+            <div className="flex flex-col items-center text-xs">
+              <p className="text-xs font-bold">
+                {eloInfo.tier === "UNRANKED" ? "UNRANKED" : `${eloInfo.tier} ${eloInfo.rank}`}
+              </p>
+              <p className="text-xs">{eloInfo.lp > 0 && ` ${eloInfo.lp} LP`}</p>
+            </div>
           );
         })()}
       </div>
@@ -99,7 +97,7 @@ const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, 
         ) : (
           // Fallback para quando não há dados de maestria
           <>
-            <TbLoader2 className="animate-spin duration-75"/>
+            <p className="text-xs text-muted-foreground">Sem dados de maestria</p>
           </>
         )}
       </div>

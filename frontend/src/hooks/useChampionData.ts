@@ -32,10 +32,8 @@ export const useChampionData = () => {
       }
       
       setChampionMap(newChampionMap);
-      console.log('Champion data loaded:', Object.keys(newChampionMap).length, 'champions');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao buscar dados dos campeões');
-      console.error("Error fetching champion data:", err);
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +50,8 @@ export const useChampionData = () => {
     if (!championName || championName === "?") {
       return "https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/Ashe.png"; // fallback
     }
-    return `https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/${championName}.png`;
+    const formattedChampionName = championName.replace(/[^a-zA-Z0-9]/g, '');
+    return `https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/${formattedChampionName}.png`;
   }, [getChampionNameById]);
 
   // Calcula winrate simulado baseado nos pontos de maestria
@@ -91,7 +90,8 @@ export const getChampionIcon = (championMap: { [key: string]: string }) =>
     if (!championName || championName === "?") {
       return "https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/Ashe.png"; // fallback
     }
-    return `https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/${championName}.png`;
+    const formattedChampionName = championName.replace(/[^a-zA-Z0-9]/g, '');
+    return `https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/${formattedChampionName}.png`;
   };
 
 export const calculateMasteryWinrateUtil = (championPoints: number): number => {

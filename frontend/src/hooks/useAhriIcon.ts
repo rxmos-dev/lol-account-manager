@@ -15,23 +15,24 @@ export const useAhriIcon = () => {
       );
       const iconName = response.data.data.Ahri.image.full;
       setAhriIcon(`https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/${iconName}`);
-      console.log('Ahri icon loaded:', iconName);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao buscar ícone da Ahri');
-      console.error("Error fetching Ahri icon:", err);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchAhriIcon();
-  }, [fetchAhriIcon]);
+    const getIcon = async () => {
+      try {
+        const iconName = await window.electron.getAhriIcon();
+        setAhriIcon(iconName);
+      } catch (error) {
+        // Error handling removed as per the change request
+      }
+    };
+    getIcon();
+  }, []);
 
-  return {
-    ahriIcon,
-    isLoading,
-    error,
-    refetch: fetchAhriIcon,
-  };
+  return { ahriIcon };
 };

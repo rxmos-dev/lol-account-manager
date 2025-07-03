@@ -63,37 +63,25 @@ export const useAccounts = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [accounts]);
-
-  // Atualiza conta específica
+  }, [accounts]);  // Atualiza conta específica
   const updateAccount = useCallback(async (updatedAccount: AccountData) => {
     try {
-      setError(null);
-      const updatedAccounts = accounts.map((account) =>
-        account.summonerName === updatedAccount.summonerName && 
-        account.tagline === updatedAccount.tagline
-          ? updatedAccount
-          : account
+      setLoading(true);
+      const saveResult = await window.electron.updateAccount(updatedAccount);
+      setAccounts((prevAccounts) =>
+        prevAccounts.map((acc) => (acc.username === updatedAccount.username ? updatedAccount : acc))
       );
-      setAccounts(updatedAccounts);
-      await saveAccounts(updatedAccounts);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao atualizar conta');
-      throw err;
+    } catch (error) {
+    } finally {
+      setLoading(false);
     }
-  }, [accounts]);
+  }, []);
 
   // Remove conta
-  const removeAccount = useCallback(async (accountToDelete: AccountData) => {
-    try {
+  const removeAccount = useCallback(async (accountToDelete: AccountData) => {    try {
       setError(null);
       const updatedAccounts = accounts.filter(
-        (account) =>
-          !(
-            account.username === accountToDelete.username &&
-            account.summonerName === accountToDelete.summonerName &&
-            account.tagline === accountToDelete.tagline
-          )
+        (account) => account.username !== accountToDelete.username
       );
       setAccounts(updatedAccounts);
       await saveAccounts(updatedAccounts);
@@ -105,13 +93,11 @@ export const useAccounts = () => {
 
   // Força atualização de conta específica
   const forceUpdateSingleAccount = useCallback(async (account: AccountData) => {
-    try {
-      setIsLoading(true);
+    try {      setIsLoading(true);
       setError(null);
       const updatedAccount = await forceUpdateAccount(account);
       const updatedAccounts = accounts.map((acc) =>
-        acc.summonerName === account.summonerName && 
-        acc.tagline === account.tagline
+        acc.username === account.username
           ? updatedAccount
           : acc
       );

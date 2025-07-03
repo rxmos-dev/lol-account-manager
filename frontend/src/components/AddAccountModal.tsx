@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import { BiCheck, BiX } from "react-icons/bi";
 import { BsInfoCircleFill } from "react-icons/bs";
 import { AccountData } from "../utils/accountsManager";
+import { LuRefreshCw } from "react-icons/lu";
 
 interface AddAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (accountData: AccountData) => void;
+  isAdding?: boolean;
 }
 
 const regions = [
@@ -28,7 +30,7 @@ const regions = [
   "VN2",
 ];
 
-const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSubmit }) => {
+const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSubmit, isAdding }) => {
   const [formData, setFormData] = useState<AccountData>({
     region: "BR1",
     username: "",
@@ -193,9 +195,10 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onSu
           <div className="flex flex-col-reverse gap-3 pt-4">
             <button
               type="submit"
-              className="flex-1 flex flex-row justify-center items-center py-3 bg-primary text-background rounded-sm hover:opacity-70 hover:cursor-pointer transition-all"
+              className="flex-1 flex flex-row justify-center items-center py-3 bg-primary text-background rounded-sm hover:opacity-70 hover:cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isAdding}
             >
-              <BiCheck />
+              {isAdding ? <LuRefreshCw className="animate-spin" /> : <BiCheck />}
             </button>
           </div>
         </form>

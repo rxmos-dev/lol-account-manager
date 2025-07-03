@@ -23,11 +23,11 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
   onSave,
   onDelete,
   onRefresh,
-}) => {
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+}) => {  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [editableAccount, setEditableAccount] = useState<AccountData | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [leaguePath, setLeaguePath] = useState("");
   const [isLaunching, setIsLaunching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -103,17 +103,22 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
       setEditableAccount({ ...editableAccount, [field]: value });
       setHasUnsavedChanges(true);
     }
-  };
-
-  const handleSave = () => {
+  };  const handleSave = async () => {
     if (editableAccount && onSave) {
-      onSave(editableAccount);
-      setHasUnsavedChanges(false);
+      setIsSaving(true);
+      try {
+        await onSave(editableAccount);
+        setHasUnsavedChanges(false);
+        onClose();
+      } catch (error) {
+        console.error("Error saving account:", error);
+      } finally {
+        setIsSaving(false);
+      }
     }
-    onClose();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (account && onDelete) {
       const confirmDelete = window.confirm(
         `Are you sure you want to delete the account "${account.summonerName}#${account.tagline}"? This action cannot be undone.`
@@ -367,17 +372,23 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
             </p>
           </div>
         )}{" "}
-        <div>
-          <button
+        <div>          <button
             onClick={hasUnsavedChanges ? handleSave : handlePlayLeague}
-            disabled={isLaunching}
+            disabled={isLaunching || isSaving}
             className={`w-full mt-8 flex justify-center py-3 rounded-sm transition-colors text-background hover:cursor-pointer ${
               hasUnsavedChanges ? "bg-foreground hover:bg-primary/80" : "bg-green-700 hover:opacity-85 text-foreground"
-            } ${isLaunching ? "opacity-50 cursor-not-allowed" : ""}`}
+            } ${(isLaunching || isSaving) ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <span className="text-xs">
               {hasUnsavedChanges ? (
-                "Save Changes"
+                isSaving ? (
+                  <div className="flex items-center gap-2 flex-row">
+                    <CgSpinner className="animate-spin h-4 w-4" />
+                    <p>Saving...</p>
+                  </div>
+                ) : (
+                  "Save Changes"
+                )
               ) : isLaunching ? (
                 <div className="flex items-center gap-2 flex-row">
                   <CgSpinner className="animate-spin h-4 w-4" />

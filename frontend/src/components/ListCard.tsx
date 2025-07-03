@@ -14,15 +14,15 @@ interface ListCardProps {
 
 const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, isLoadingElo }) => {
   const { getChampionNameById, getChampionIcon } = useChampion();
-  
+
   const eloInfo = formatEloData(account.eloData);
-  
+
   // Função para verificar se os dados estão atualizados (últimas 24h)
   const isDataFresh = () => {
     if (!account.lastUpdated) return false;
     const now = Date.now();
     const twentyFourHours = 24 * 60 * 60 * 1000;
-    return (now - account.lastUpdated) < twentyFourHours;
+    return now - account.lastUpdated < twentyFourHours;
   };
 
   const getHoursFromUpdate = () => {
@@ -30,7 +30,7 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
     const now = Date.now();
     return Math.floor((now - account.lastUpdated) / (1000 * 60 * 60));
   };
-  
+
   return (
     <div
       key={index}
@@ -42,9 +42,9 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
       {/* Indicador de cache */}
       {account.lastUpdated && (
         <div className="absolute top-3 right-3">
-          <div 
-            className={`w-2 h-2 rounded-full ${isDataFresh() ? 'bg-green-400' : 'bg-yellow-400'}`}
-            title={`Dados ${isDataFresh() ? 'atualizados' : 'desatualizados'} - ${getHoursFromUpdate()}h atrás`}
+          <div
+            className={`w-2 h-2 rounded-full ${isDataFresh() ? "bg-green-400" : "bg-yellow-400"}`}
+            title={`Dados ${isDataFresh() ? "atualizados" : "desatualizados"} - ${getHoursFromUpdate()}h atrás`}
           />
         </div>
       )}
@@ -84,7 +84,10 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
           <div className="flex flex-row items-center gap-2">
             {account.championMasteriesData && account.championMasteriesData.length > 0 ? (
               account.championMasteriesData.slice(0, 3).map((mastery, index) => (
-                <div key={index} className="flex flex-col items-center text-xs gap-1">
+                <div
+                  key={index}
+                  className="flex flex-col items-center text-xs gap-1"
+                >
                   <img
                     src={getChampionIcon(mastery.championId)}
                     alt={`Champion ${mastery.championId}`}
@@ -93,36 +96,15 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
                       (e.target as HTMLImageElement).src = ahriIcon || "";
                     }}
                   />
-                  <p className="text-[8px] text-muted-foreground uppercase">{getChampionNameById(mastery.championId)}</p>
+                  <p className="text-[8px] text-muted-foreground uppercase">
+                    {getChampionNameById(mastery.championId)}
+                  </p>
                 </div>
               ))
             ) : (
               // Fallback para quando não há dados de maestria
               <>
-                <div className="flex flex-col items-center text-xs gap-1">
-                  <img
-                    src={ahriIcon || ""}
-                    alt="Ahri Icon"
-                    className="w-10 h-10 rounded-lg shadow-sm"
-                  />
-                  <span className="font-bold text-green-400">55%</span>
-                </div>
-                <div className="flex flex-col items-center text-xs gap-1">
-                  <img
-                    src={ahriIcon || ""}
-                    alt="Ahri Icon"
-                    className="w-10 h-10 rounded-lg shadow-sm"
-                  />
-                  <span className="font-bold text-green-400">55%</span>
-                </div>
-                <div className="flex flex-col items-center text-xs gap-1">
-                  <img
-                    src={ahriIcon || ""}
-                    alt="Ahri Icon"
-                    className="w-10 h-10 rounded-lg shadow-sm"
-                  />
-                  <span className="font-bold text-green-400">55%</span>
-                </div>
+                <p className="text-xs text-muted-foreground">Sem dados de maestria</p>
               </>
             )}
           </div>

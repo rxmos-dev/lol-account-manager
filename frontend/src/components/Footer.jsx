@@ -9,7 +9,7 @@ const Footer = () => {
   };
 
   return (
-    <nav className="flex flex-row justify-between bg-secondary p-2 border-b border-border shadow-sm items-center">
+    <nav className="fixed bottom-0 w-full flex flex-row justify-between bg-secondary p-2 border-b border-border shadow-sm items-center">
       <a
         href="#"
         onClick={handleExternalLink}

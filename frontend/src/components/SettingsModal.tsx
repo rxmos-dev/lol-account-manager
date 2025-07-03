@@ -82,7 +82,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
       // Se não há caminho customizado definido, mostra o caminho padrão onde as contas estão
       if (!currentPath) {
-        console.log("Caminho padrão sendo usado para accounts.json");
+        // Opcional: pode-se adicionar uma lógica aqui se necessário
       }
     } catch (error) {
       console.error("Erro ao carregar caminho atual:", error);

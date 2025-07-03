@@ -67,7 +67,7 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="bg-secondary p-2.5 border-b border-border shadow-sm justify-between flex items-center drag-region">
+    <nav className="fixed z-50 w-full bg-secondary p-2.5 border-b border-border shadow-sm justify-between flex items-center drag-region">
       <div className="flex font-semibold items-center text-foreground gap-2 text-sm">
         <SiLeagueoflegends />
         <p>ACCOUNT MANAGER</p>

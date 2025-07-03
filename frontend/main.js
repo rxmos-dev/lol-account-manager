@@ -468,13 +468,21 @@ const encryptionKey = 'LoL-Account-Manager-2025'; // Em produção, use uma chav
 
 ipcMain.handle('save-accounts', async (event, accounts) => {
   try {
+    console.log('Saving accounts:', accounts.length, 'accounts');
     const accountsFilePath = getAccountsFilePath();
-    
-    // Criptografar senhas antes de salvar
-    const encryptedAccounts = accounts.map(account => ({
-      ...account,
-      password: CryptoJS.AES.encrypt(account.password, encryptionKey).toString()
-    }));
+    console.log('Accounts file path:', accountsFilePath);
+      // Criptografar senhas antes de salvar (apenas se não estiverem já criptografadas)
+    const encryptedAccounts = accounts.map(account => {
+      // Verifica se a senha já está criptografada (contém "U2FsdGVkX1")
+      const isAlreadyEncrypted = account.password && account.password.startsWith('U2FsdGVkX1');
+      
+      return {
+        ...account,
+        password: isAlreadyEncrypted 
+          ? account.password 
+          : CryptoJS.AES.encrypt(account.password, encryptionKey).toString()
+      };
+    });
     
     // Cria o diretório se não existir
     const dir = path.dirname(accountsFilePath);
@@ -483,6 +491,7 @@ ipcMain.handle('save-accounts', async (event, accounts) => {
     }
     
     fs.writeFileSync(accountsFilePath, JSON.stringify(encryptedAccounts, null, 2));
+    console.log('Accounts saved successfully');
     return { success: true };
   } catch (error) {
     console.error('Erro ao salvar contas:', error);

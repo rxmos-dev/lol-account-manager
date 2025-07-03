@@ -126,7 +126,6 @@ export const updateAccountsWithPuuids = async (accounts: AccountData[]): Promise
       const shouldUpdate = needsUpdate(account.lastUpdated);
       
       if (shouldUpdate) {
-        console.log(`Atualizando dados para ${account.summonerName}#${account.tagline}...`);
         
         // Busca PUUID se não existe
         if (!account.puuid) {
@@ -156,9 +155,7 @@ export const updateAccountsWithPuuids = async (accounts: AccountData[]): Promise
         
         // Atualiza o timestamp
         updatedAccount.lastUpdated = Date.now();
-      } else {
-        console.log(`Dados em cache para ${account.summonerName}#${account.tagline} ainda são válidos (${Math.round((CACHE_DURATION - (Date.now() - account.lastUpdated!)) / (1000 * 60 * 60))} horas restantes)`);
-      }
+      } 
       
       return updatedAccount;
     })
@@ -265,8 +262,6 @@ export const updateAccount = async (updatedAccount: Account): Promise<void> => {
 export const forceUpdateAccount = async (account: AccountData): Promise<AccountData> => {
   let updatedAccount = { ...account };
   
-  console.log(`Forçando atualização para ${account.summonerName}#${account.tagline}...`);
-  
   // Busca PUUID se não existe
   if (!account.puuid) {
     const puuid = await fetchPuuid(account.summonerName, account.tagline);
@@ -301,14 +296,22 @@ export const forceUpdateAccount = async (account: AccountData): Promise<AccountD
 
 // Função para forçar atualização de todas as contas
 export const forceUpdateAllAccounts = async (accounts: AccountData[]): Promise<AccountData[]> => {
-  console.log('Forçando atualização de todas as contas...');
-  
+
   const updatedAccounts = await Promise.all(
     accounts.map(async (account) => {
-      return await forceUpdateAccount(account);
+      try {
+        const updatedData = await window.electron.getAccountData(account.username, account.password, account.region);
+        return { ...account, ...updatedData, lastUpdated: Date.now() };
+      } catch (error) {
+        console.error(`Erro ao atualizar dados para ${account.summonerName}#${account.tagline}:`, error);
+        return account; // Retorna os dados originais em caso de erro
+      }
     })
   );
-  
+
+  // Salva as contas atualizadas
+  await saveAccounts(updatedAccounts);
+
   return updatedAccounts;
 };
 

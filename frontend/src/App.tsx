@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import Navbar from "./components/Navbar";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ChampionProvider } from "./contexts/ChampionContext";
-import { BiPlus, BiPlusCircle, BiGridAlt, BiListUl, BiRefresh, BiImport } from "react-icons/bi";
+import { BiPlus, BiPlusCircle, BiGridAlt, BiListUl } from "react-icons/bi";
 import AddAccountModal from "./components/AddAccountModal";
 import AccountDetailsModal from "./components/AccountDetailsModal";
 import GridCard from "./components/GridCard";
@@ -11,7 +11,7 @@ import { AccountData } from "./utils/accountsManager";
 import Footer from "./components/Footer";
 import { useAccounts, useEloData, useAhriIcon, useViewMode, useModals } from "./hooks";
 import { VscJson } from "react-icons/vsc";
-import { LuRefreshCcw, LuRefreshCw, LuRefreshCwOff } from "react-icons/lu";
+import { LuRefreshCw } from "react-icons/lu";
 
 // Re-exporta as funções utilitárias para uso em outros componentes
 export {
@@ -25,6 +25,7 @@ export {
 } from "./utils/gameUtils";
 
 function App(): React.JSX.Element {
+  const [isAddingAccount, setIsAddingAccount] = React.useState(false);
   // Hooks customizados
   const {
     accounts,
@@ -57,11 +58,15 @@ function App(): React.JSX.Element {
   }, [loadInitialAccounts]);
 
   const handleAddAccount = async (accountData: AccountData) => {
+    setIsAddingAccount(true);
     try {
       await addAccount(accountData);
-      console.log("Account added:", accountData);
+      loadInitialAccounts(); // Recarrega as contas
+      closeAddModal(); // Fecha o modal
     } catch (error) {
       console.error("Error adding account:", error);
+    } finally {
+      setIsAddingAccount(false);
     }
   };
 
@@ -72,7 +77,6 @@ function App(): React.JSX.Element {
   const handleSaveAccount = async (updatedAccount: AccountData) => {
     try {
       await updateAccountData(updatedAccount);
-      console.log("Account updated:", updatedAccount);
     } catch (error) {
       console.error("Error updating account:", error);
     }
@@ -81,7 +85,6 @@ function App(): React.JSX.Element {
   const handleDeleteAccount = async (accountToDelete: AccountData) => {
     try {
       await removeAccount(accountToDelete);
-      console.log("Account deleted:", accountToDelete);
     } catch (error) {
       console.error("Error deleting account:", error);
     }
@@ -90,7 +93,6 @@ function App(): React.JSX.Element {
   const handleRefreshAccount = async (accountToRefresh: AccountData) => {
     try {
       await forceUpdateSingleAccount(accountToRefresh);
-      console.log("Account refreshed");
     } catch (error) {
       console.error("Error refreshing account:", error);
     }
@@ -99,7 +101,6 @@ function App(): React.JSX.Element {
   const handleRefreshAll = async () => {
     try {
       await forceUpdateAll();
-      console.log("All accounts refreshed");
     } catch (error) {
       console.error("Error refreshing all accounts:", error);
     }
@@ -111,7 +112,7 @@ function App(): React.JSX.Element {
         <div className="bg-background min-h-screen flex flex-col relative">
           <Navbar />
 
-          <div className="flex-1 flex flex-col items-center justify-start p-4">
+          <div className="flex-1 flex flex-col items-center justify-start px-5 pt-20 pb-80">
             {accounts.length === 0 ? (
               <>
                 <h1 className="text-4xl font-bold text-primary">Welcome!</h1>
@@ -202,7 +203,7 @@ function App(): React.JSX.Element {
 
                     <button
                       onClick={openAddModal}
-                      className="bg-secondary/30 border-b-5 border-green-500 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-40 h-60 flex flex-col hover:cursor-pointer hover:border-b-0 transition-all duration-50"
+                      className="bg-secondary/30 border-b-5 border-green-500 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-50 h-70 flex flex-col hover:cursor-pointer hover:border-b-0 transition-all duration-50"
                     >
                       <BiPlusCircle className="w-10 h-10 mb-1" />
                     </button>
@@ -246,6 +247,7 @@ function App(): React.JSX.Element {
             isOpen={isAddModalOpen}
             onClose={closeAddModal}
             onSubmit={handleAddAccount}
+            isAdding={isAddingAccount}
           />
 
           <AccountDetailsModal
