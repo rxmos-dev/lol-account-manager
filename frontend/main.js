@@ -78,6 +78,22 @@ function createWindow() {
     },
   });
 
+  // Interceptar criação de novas janelas (como janela de autenticação do Google)
+  win.webContents.setWindowOpenHandler(() => {
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        frame: false,
+        width: 500,
+        height: 600,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true
+        }
+      }
+    };
+  });
+
   if (app.isPackaged) {
     // In production, try multiple possible paths
     const possiblePaths = [
@@ -85,7 +101,7 @@ function createWindow() {
       path.join(__dirname, '..', 'dist', 'index.html'),
       path.join(app.getAppPath(), 'dist', 'index.html'),
     ];
-    
+
     let indexPath = possiblePaths[0];
     for (const testPath of possiblePaths) {
       if (fs.existsSync(testPath)) {
@@ -93,7 +109,7 @@ function createWindow() {
         break;
       }
     }
-    
+
     console.log('Loading packaged app from:', indexPath);
     win.loadFile(indexPath);
   } else {
@@ -140,13 +156,13 @@ ipcMain.handle('get-lcu-credentials', async () => {
   try {
     const lockfilePath = path.join(os.homedir(), 'AppData', 'Local', 'Riot Games', 'League of Legends', 'lockfile');
     console.log('Procurando lockfile em:', lockfilePath);
-    
+
     if (fs.existsSync(lockfilePath)) {
       console.log('Lockfile encontrado, lendo conteúdo...');
       const lockfileContent = fs.readFileSync(lockfilePath, 'utf8');
       console.log('Conteúdo do lockfile:', lockfileContent);
       const parts = lockfileContent.split(':');
-      
+
       if (parts.length >= 5) {
         const credentials = {
           port: parts[2],
@@ -160,12 +176,12 @@ ipcMain.handle('get-lcu-credentials', async () => {
       }
     } else {
       console.log('Lockfile não encontrado no caminho padrão');
-      
+
       const processLockfile = await findLockfileFromProcess();
       if (processLockfile) {
         const lockfileContent = fs.readFileSync(processLockfile, 'utf8');
         const parts = lockfileContent.split(':');
-        
+
         if (parts.length >= 5) {
           return {
             port: parts[2],
@@ -174,20 +190,20 @@ ipcMain.handle('get-lcu-credentials', async () => {
           };
         }
       }
-      
+
       const alternatePaths = [
         path.join('C:', 'Riot Games', 'League of Legends', 'lockfile'),
         path.join('C:', 'Program Files', 'Riot Games', 'League of Legends', 'lockfile'),
         path.join('C:', 'Program Files (x86)', 'Riot Games', 'League of Legends', 'lockfile')
       ];
-      
+
       for (const altPath of alternatePaths) {
         console.log('Tentando caminho alternativo:', altPath);
         if (fs.existsSync(altPath)) {
           console.log('Lockfile encontrado em caminho alternativo:', altPath);
           const lockfileContent = fs.readFileSync(altPath, 'utf8');
           const parts = lockfileContent.split(':');
-          
+
           if (parts.length >= 5) {
             return {
               port: parts[2],
@@ -213,9 +229,9 @@ const findLockfileFromProcess = () => {
         resolve(null);
         return;
       }
-      
+
       console.log('WMIC output:', stdout);
-      
+
       const lines = stdout.split('\n').filter(line => line.trim() && !line.includes('ExecutablePath'));
       for (const line of lines) {
         const parts = line.split(',');
@@ -224,7 +240,7 @@ const findLockfileFromProcess = () => {
           if (execPath && execPath !== '') {
             const lockfilePath = path.join(path.dirname(execPath), 'lockfile');
             console.log('Tentando lockfile em:', lockfilePath);
-            
+
             if (fs.existsSync(lockfilePath)) {
               console.log('Lockfile encontrado via processo:', lockfilePath);
               resolve(lockfilePath);
@@ -254,7 +270,7 @@ const createAxiosInstance = (credentials) => {
 ipcMain.handle('test-lcu-connection', async (event, credentials) => {
   console.log('Testando conexão LCU...');
   if (!credentials) return false;
-  
+
   try {
     const axiosInstance = createAxiosInstance(credentials);
     const response = await axiosInstance.get(`https://127.0.0.1:${credentials.port}/lol-summoner/v1/current-summoner`);
@@ -269,7 +285,7 @@ ipcMain.handle('test-lcu-connection', async (event, credentials) => {
 ipcMain.handle('check-champion-select', async (event, credentials) => {
   console.log('Verificando Champion Select...');
   if (!credentials) return false;
-  
+
   try {
     const axiosInstance = createAxiosInstance(credentials);
     const response = await axiosInstance.get(`https://127.0.0.1:${credentials.port}/lol-champ-select/v1/session`);
@@ -285,42 +301,42 @@ ipcMain.handle('check-champion-select', async (event, credentials) => {
 ipcMain.handle('get-champion-select-data', async (event, credentials) => {
   console.log('Buscando dados do Champion Select...');
   if (!credentials) return null;
-  
+
   try {
     const axiosInstance = createAxiosInstance(credentials);
     const response = await axiosInstance.get(`https://127.0.0.1:${credentials.port}/lol-champ-select/v1/session`);
-    
+
     if (response.status === 200) {
       console.log('Dados do Champion Select obtidos com sucesso');
       const champSelectData = response.data;
-      
+
       const myTeam = champSelectData.myTeam || [];
       const theirTeam = champSelectData.theirTeam || [];
       const actions = champSelectData.actions || [];
       const timer = champSelectData.timer || {};
-      
+
       const localPlayerCellId = champSelectData.localPlayerCellId || 0;
       const isMyTeamBlue = localPlayerCellId < 5;
-      
-      const currentAction = actions.flat().find(action => 
+
+      const currentAction = actions.flat().find(action =>
         action.isInProgress && (action.type === 'pick' || action.type === 'ban')
       );
-      
+
       let currentPicker = null;
       if (currentAction) {
         const allPlayers = [...myTeam, ...theirTeam];
         const pickingPlayer = allPlayers.find(player => player.cellId === currentAction.actorCellId);
         currentPicker = pickingPlayer?.gameName || pickingPlayer?.summonerName || `Player ${currentAction.actorCellId + 1}`;
       }
-      
+
       const myTeamBans = champSelectData.bans?.myTeamBans || [];
       const theirTeamBans = champSelectData.bans?.theirTeamBans || [];
-      
+
       const getChampionName = (championId) => {
         if (!championId || championId === 0) return "None";
         return championMap[championId] || `Champion ${championId}`;
       };
-      
+
       const processedData = {
         blueSide: (isMyTeamBlue ? myTeam : theirTeam).map(player => ({
           player: player.gameName || player.summonerName || `Player ${player.cellId + 1}`,
@@ -349,7 +365,7 @@ ipcMain.handle('get-champion-select-data', async (event, credentials) => {
         },
         isMyTeamBlue: isMyTeamBlue
       };
-      
+
       console.log('Dados processados:', JSON.stringify(processedData, null, 2));
       return processedData;
     }
@@ -362,11 +378,11 @@ ipcMain.handle('get-champion-select-data', async (event, credentials) => {
 
 ipcMain.handle('get-champion-info', async (event, credentials, championId) => {
   if (!credentials || !championId) return null;
-  
+
   try {
     const axiosInstance = createAxiosInstance(credentials);
     const response = await axiosInstance.get(`https://127.0.0.1:${credentials.port}/lol-champions/v1/champions/${championId}`);
-    
+
     if (response.status === 200) {
       return {
         id: response.data.id,
@@ -409,22 +425,22 @@ ipcMain.handle('get-champion-data', async (event, credentials) => {
 
 ipcMain.handle('check-league-login', async (event, credentials) => {
   if (!credentials) return false;
-  
+
   try {
     const axiosInstance = createAxiosInstance(credentials);
-    
+
     const endpoints = [
       '/lol-summoner/v1/current-summoner',
       '/lol-login/v1/session',
       '/lol-platform-config/v1/namespaces'
     ];
-    
+
     for (const endpoint of endpoints) {
       try {
         console.log(`Testando endpoint: ${endpoint}`);
         const response = await axiosInstance.get(`https://127.0.0.1:${credentials.port}${endpoint}`);
         console.log(`Endpoint ${endpoint} retornou status:`, response.status);
-        
+
         if (response.status === 200) {
           console.log(`Sucesso no endpoint ${endpoint}:`, response.data);
           return true;
@@ -433,7 +449,7 @@ ipcMain.handle('check-league-login', async (event, credentials) => {
         console.log(`Erro no endpoint ${endpoint}:`, endpointError.message);
       }
     }
-    
+
     return false;
   } catch (error) {
     console.log('Erro geral ao verificar login:', error.message);
@@ -468,30 +484,27 @@ const encryptionKey = 'LoL-Account-Manager-2025'; // Em produção, use uma chav
 
 ipcMain.handle('save-accounts', async (event, accounts) => {
   try {
-    console.log('Saving accounts:', accounts.length, 'accounts');
     const accountsFilePath = getAccountsFilePath();
-    console.log('Accounts file path:', accountsFilePath);
-      // Criptografar senhas antes de salvar (apenas se não estiverem já criptografadas)
+    // Criptografar senhas antes de salvar (apenas se não estiverem já criptografadas)
     const encryptedAccounts = accounts.map(account => {
       // Verifica se a senha já está criptografada (contém "U2FsdGVkX1")
       const isAlreadyEncrypted = account.password && account.password.startsWith('U2FsdGVkX1');
-      
+
       return {
         ...account,
-        password: isAlreadyEncrypted 
-          ? account.password 
+        password: isAlreadyEncrypted
+          ? account.password
           : CryptoJS.AES.encrypt(account.password, encryptionKey).toString()
       };
     });
-    
+
     // Cria o diretório se não existir
     const dir = path.dirname(accountsFilePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    
+
     fs.writeFileSync(accountsFilePath, JSON.stringify(encryptedAccounts, null, 2));
-    console.log('Accounts saved successfully');
     return { success: true };
   } catch (error) {
     console.error('Erro ao salvar contas:', error);
@@ -502,20 +515,20 @@ ipcMain.handle('save-accounts', async (event, accounts) => {
 ipcMain.handle('load-accounts', async () => {
   try {
     const accountsFilePath = getAccountsFilePath();
-    
+
     if (!fs.existsSync(accountsFilePath)) {
       return [];
     }
-    
+
     const data = fs.readFileSync(accountsFilePath, 'utf8');
     const accounts = JSON.parse(data);
-    
+
     // Descriptografar senhas
     const decryptedAccounts = accounts.map(account => ({
       ...account,
       password: CryptoJS.AES.decrypt(account.password, encryptionKey).toString(CryptoJS.enc.Utf8)
     }));
-    
+
     return decryptedAccounts;
   } catch (error) {
     console.error('Erro ao carregar contas:', error);
@@ -560,16 +573,16 @@ ipcMain.handle('set-accounts-path', async (event, newPath) => {
     }
 
     customAccountsPath = newPath;
-    
+
     // Salva a configuração
     const configPath = path.join(app.getPath('userData'), 'config.json');
     let config = {};
-    
+
     // Carrega configuração existente se houver
     if (fs.existsSync(configPath)) {
       config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
     }
-    
+
     config.accountsPath = newPath;
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 
@@ -583,7 +596,7 @@ ipcMain.handle('set-accounts-path', async (event, newPath) => {
 ipcMain.handle('reset-accounts-path', async () => {
   try {
     const defaultPath = path.join(app.getPath('userData'), 'accounts.json');
-    
+
     // Move arquivo atual para o local padrão se necessário
     const currentPath = getAccountsFilePath();
     if (fs.existsSync(currentPath) && currentPath !== defaultPath) {
@@ -599,13 +612,13 @@ ipcMain.handle('reset-accounts-path', async () => {
     }
 
     customAccountsPath = null;
-    
+
     // Remove configuração customizada, mas preserva outras configurações
     const configPath = path.join(app.getPath('userData'), 'config.json');
     if (fs.existsSync(configPath)) {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
       delete config.accountsPath;
-      
+
       // Se há outras configurações, mantem o arquivo, senão remove
       if (Object.keys(config).length > 0) {
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
@@ -625,16 +638,16 @@ ipcMain.handle('open-accounts-folder', async () => {
   try {
     const accountsFilePath = getAccountsFilePath();
     const dir = path.dirname(accountsFilePath);
-    
+
     // Verifica se o diretório existe
     if (!fs.existsSync(dir)) {
       return { success: false, error: 'Diretório não encontrado' };
     }
-    
+
     // Abre o explorador de arquivos na pasta do arquivo
     const { shell } = await import('electron');
     await shell.showItemInFolder(accountsFilePath);
-    
+
     return { success: true };
   } catch (error) {
     console.error('Erro ao abrir pasta:', error);
@@ -678,16 +691,16 @@ ipcMain.handle('set-league-path', async (event, newPath) => {
     }
 
     customLeaguePath = newPath;
-    
+
     // Salva a configuração
     const configPath = path.join(app.getPath('userData'), 'config.json');
     let config = {};
-    
+
     // Carrega configuração existente se houver
     if (fs.existsSync(configPath)) {
       config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
     }
-    
+
     config.leaguePath = newPath;
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 
@@ -714,7 +727,7 @@ ipcMain.handle('select-league-exe', async () => {
     if (!result.canceled && result.filePaths.length > 0) {
       return { canceled: false, filePath: result.filePaths[0] };
     }
-    
+
     return { canceled: true };
   } catch (error) {
     console.error('Erro ao abrir dialog:', error);
@@ -725,7 +738,7 @@ ipcMain.handle('select-league-exe', async () => {
 ipcMain.handle('launch-league', async (event, leaguePath) => {
   try {
     const execPath = leaguePath || getLeaguePath();
-    
+
     // Verifica se o arquivo existe
     if (!fs.existsSync(execPath)) {
       return { success: false, error: 'Arquivo executável não encontrado: ' + execPath };
@@ -733,7 +746,7 @@ ipcMain.handle('launch-league', async (event, leaguePath) => {
 
     // Comando para abrir League of Legends
     const command = `"${execPath}" --launch-product=league_of_legends --launch-patchline=live`;
-    
+
     return new Promise((resolve) => {
       exec(command, (error) => {
         if (error) {
@@ -818,12 +831,12 @@ const loadConfig = () => {
 app.whenReady().then(() => {
   loadConfig();
   createWindow();
-  
+
   // Check for updates after app is ready
   setTimeout(() => {
     autoUpdater.checkForUpdatesAndNotify();
   }, 3000); // Wait 3 seconds before checking for updates
-  
+
   // Check for updates every 30 minutes (1800000 ms)
   setInterval(() => {
     autoUpdater.checkForUpdatesAndNotify();
@@ -880,14 +893,14 @@ const championMap = {
 ipcMain.handle('export-accounts', async () => {
   try {
     const { dialog } = await import('electron');
-    
+
     // First, load current accounts file
     const accountsFilePath = getAccountsFilePath();
-    
+
     if (!fs.existsSync(accountsFilePath)) {
       return { success: false, error: 'No accounts file found to export' };
     }
-    
+
     // Show save dialog
     const result = await dialog.showSaveDialog({
       title: 'Export Accounts',
@@ -905,7 +918,7 @@ ipcMain.handle('export-accounts', async () => {
     // Read and copy the exact same file (with encrypted passwords)
     const data = fs.readFileSync(accountsFilePath, 'utf8');
     fs.writeFileSync(result.filePath, data);
-    
+
     return { success: true, filePath: result.filePath };
   } catch (error) {
     console.error('Error exporting accounts:', error);
@@ -917,7 +930,7 @@ ipcMain.handle('export-accounts', async () => {
 ipcMain.handle('import-accounts', async () => {
   try {
     const { dialog } = await import('electron');
-    
+
     // Show open dialog
     const result = await dialog.showOpenDialog({
       title: 'Import Accounts',
@@ -933,10 +946,10 @@ ipcMain.handle('import-accounts', async () => {
     }
 
     const filePath = result.filePaths[0];
-    
+
     // Read the import file
     const importData = fs.readFileSync(filePath, 'utf8');
-    
+
     // Validate JSON format
     let importedAccounts;
     try {
@@ -944,24 +957,24 @@ ipcMain.handle('import-accounts', async () => {
     } catch {
       return { success: false, error: 'Invalid JSON file format' };
     }
-    
+
     // Validate the imported data structure
     if (!Array.isArray(importedAccounts)) {
       return { success: false, error: 'Invalid file format: expected an array of accounts' };
     }
-    
+
     // Get the current accounts file path
     const currentAccountsFilePath = getAccountsFilePath();
-    
+
     // Ensure directory exists
     const dir = path.dirname(currentAccountsFilePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    
+
     // Replace the current accounts file with the imported one
     fs.writeFileSync(currentAccountsFilePath, importData);
-    
+
     return { success: true, importedCount: importedAccounts.length };
   } catch (error) {
     console.error('Error importing accounts:', error);

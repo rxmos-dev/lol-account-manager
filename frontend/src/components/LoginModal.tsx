@@ -19,17 +19,12 @@ const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
     setIsLoading(true);
 
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      
-      console.log("Google login successful:", {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL
+      provider.setCustomParameters({
+        prompt: 'select_account'
       });
+      
+      await signInWithPopup(auth, provider);
 
-      // Close modal after successful login
       onClose();
     } catch (error) {
       console.error("Google login error:", error);

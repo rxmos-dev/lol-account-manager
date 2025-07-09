@@ -8,6 +8,7 @@ import {
   forceUpdateAllAccounts 
 } from '../utils/accountsManager';
 import { useRiotApi } from './useRiotApi';
+import { useFirebaseSync } from './useFirebaseSync';
 
 export const useAccounts = () => {
   const [accounts, setAccounts] = useState<AccountData[]>([]);
@@ -15,17 +16,19 @@ export const useAccounts = () => {
   const [error, setError] = useState<string | null>(null);
   
   const { 
-    fetchPuuid, 
-    fetchEloData, 
-    fetchChampionMasteries, 
-    fetchSummonerLane,
     isLoading: apiLoading,
     error: apiError 
   } = useRiotApi();
 
+  const { 
+    bidirectionalSync, 
+    isSyncing, 
+    syncError 
+  } = useFirebaseSync();
+
   // Combina loading states
-  const isLoadingCombined = isLoading || apiLoading;
-  const errorCombined = error || apiError?.message || null;
+  const isLoadingCombined = isLoading || apiLoading || isSyncing;
+  const errorCombined = error || apiError?.message || syncError || null;
 
   // Carrega contas iniciais
   const loadInitialAccounts = useCallback(async () => {
@@ -66,16 +69,20 @@ export const useAccounts = () => {
   }, [accounts]);  // Atualiza conta específica
   const updateAccount = useCallback(async (updatedAccount: AccountData) => {
     try {
-      setLoading(true);
-      const saveResult = await window.electron.updateAccount(updatedAccount);
-      setAccounts((prevAccounts) =>
-        prevAccounts.map((acc) => (acc.username === updatedAccount.username ? updatedAccount : acc))
+      setIsLoading(true);
+      setError(null);
+      const updatedAccounts = accounts.map((acc) => 
+        acc.username === updatedAccount.username ? updatedAccount : acc
       );
-    } catch (error) {
+      setAccounts(updatedAccounts);
+      await saveAccounts(updatedAccounts);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao atualizar conta');
+      throw err;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, []);
+  }, [accounts]);
 
   // Remove conta
   const removeAccount = useCallback(async (accountToDelete: AccountData) => {    try {
@@ -128,6 +135,21 @@ export const useAccounts = () => {
     }
   }, [accounts]);
 
+  // Sincronização bidirecional com Firebase
+  const syncWithFirebase = useCallback(async () => {
+    try {
+      setError(null);
+      const syncedAccounts = await bidirectionalSync(accounts);
+      setAccounts(syncedAccounts);
+      await saveAccounts(syncedAccounts);
+      return { success: true, message: 'Sincronização concluída com sucesso' };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao sincronizar com Firebase';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  }, [accounts, bidirectionalSync]);
+
   // Salva automaticamente quando as contas mudam
   useEffect(() => {
     if (accounts.length > 0) {
@@ -147,6 +169,7 @@ export const useAccounts = () => {
     removeAccount,
     forceUpdateSingleAccount,
     forceUpdateAll,
+    syncWithFirebase,
     setAccounts, // Para casos especiais onde precisamos definir o estado diretamente
   };
 };
