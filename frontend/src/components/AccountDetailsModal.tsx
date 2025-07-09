@@ -3,7 +3,6 @@ import { BiX, BiCopy, BiCheck, BiShow, BiHide, BiTrash, BiRefresh } from "react-
 import { BsInfoCircleFill } from "react-icons/bs";
 import { AccountData } from "../utils/accountsManager";
 import { formatEloData } from "../utils/gameUtils";
-import { FaPlay } from "react-icons/fa";
 import { CgSpinner } from "react-icons/cg";
 import { FiMoreHorizontal } from "react-icons/fi";
 
@@ -23,34 +22,14 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
   onSave,
   onDelete,
   onRefresh,
-}) => {  const [copiedField, setCopiedField] = useState<string | null>(null);
+}) => {
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [editableAccount, setEditableAccount] = useState<AccountData | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [leaguePath, setLeaguePath] = useState("");
-  const [isLaunching, setIsLaunching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
-
-  const handlePlayLeague = async () => {
-    setIsLaunching(true);
-    try {
-      const { ipcRenderer } = window.require("electron");
-      const result = await ipcRenderer.invoke("launch-league", leaguePath);
-
-      if (!result.success) {
-        alert(`Erro ao abrir League of Legends: ${result.error}`);
-      }
-    } catch (error) {
-      console.error("Erro ao abrir League of Legends:", error);
-      alert("Erro ao abrir League of Legends");
-    } finally {
-      setTimeout(() => {
-        setIsLaunching(false);
-      }, 3000);
-    }
-  };
 
   const copyToClipboard = async (text: string, field: string) => {
     await navigator.clipboard.writeText(text);
@@ -63,20 +42,6 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
     if (account) {
       setEditableAccount({ ...account });
       setHasUnsavedChanges(false);
-    }
-
-    const loadLeaguePath = async () => {
-      try {
-        const { ipcRenderer } = window.require("electron");
-        const currentPath = await ipcRenderer.invoke("get-league-path");
-        setLeaguePath(currentPath || "");
-      } catch (error) {
-        console.error("Erro ao carregar caminho do League:", error);
-      }
-    };
-
-    if (isOpen) {
-      loadLeaguePath();
     }
   }, [account, isOpen]);
 
@@ -103,7 +68,8 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
       setEditableAccount({ ...editableAccount, [field]: value });
       setHasUnsavedChanges(true);
     }
-  };  const handleSave = async () => {
+  };
+  const handleSave = async () => {
     if (editableAccount && onSave) {
       setIsSaving(true);
       try {
@@ -372,35 +338,27 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
             </p>
           </div>
         )}{" "}
-        <div>          <button
-            onClick={hasUnsavedChanges ? handleSave : handlePlayLeague}
-            disabled={isLaunching || isSaving}
-            className={`w-full mt-8 flex justify-center py-3 rounded-sm transition-colors text-background hover:cursor-pointer ${
-              hasUnsavedChanges ? "bg-foreground hover:bg-primary/80" : "bg-green-700 hover:opacity-85 text-foreground"
-            } ${(isLaunching || isSaving) ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            <span className="text-xs">
-              {hasUnsavedChanges ? (
-                isSaving ? (
+        <div>
+          {hasUnsavedChanges && (
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className={`w-full mt-8 flex justify-center py-3 rounded-sm transition-colors text-background hover:cursor-pointer bg-foreground hover:bg-primary/80 ${
+                isSaving ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              <span className="text-xs">
+                {isSaving ? (
                   <div className="flex items-center gap-2 flex-row">
                     <CgSpinner className="animate-spin h-4 w-4" />
                     <p>Saving...</p>
                   </div>
                 ) : (
                   "Save Changes"
-                )
-              ) : isLaunching ? (
-                <div className="flex items-center gap-2 flex-row">
-                  <CgSpinner className="animate-spin h-4 w-4" />
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 flex-row">
-                  <FaPlay />
-                  <p>PLAY</p>
-                </div>
-              )}
-            </span>
-          </button>
+                )}
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </div>

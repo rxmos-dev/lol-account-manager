@@ -18,6 +18,7 @@
     "axios": "^1.10.0",
     "crypto-js": "^4.2.0",
     "electron-updater": "^6.3.9",
+    "firebase": "^11.10.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
@@ -42,7 +43,8 @@
     "vite-plugin-electron": "^0.29.0",
     "vite-plugin-electron-renderer": "^0.14.6",
     "wait-on": "^8.0.3"
-  },  "build": {
+  },
+  "build": {
     "appId": "com.yurirxmos.lol-account-manager",
     "productName": "LoL Account Manager",
     "directories": {
@@ -62,7 +64,8 @@
         ]
       }
     ],
-    "forceCodeSigning": false,"win": {
+    "forceCodeSigning": false,
+    "win": {
       "target": "nsis",
       "artifactName": "${productName}-${version}-${arch}.${ext}",
       "requestedExecutionLevel": "asInvoker",

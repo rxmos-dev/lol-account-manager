@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { HiMoon, HiSun } from "react-icons/hi";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 import { SiLeagueoflegends } from "react-icons/si";
 import { PiGearBold } from "react-icons/pi";
 import { IoMdClose } from "react-icons/io";
@@ -9,15 +10,23 @@ import { HiChevronDown } from "react-icons/hi";
 import SettingsModal from "./SettingsModal";
 import { LuMaximize2 } from "react-icons/lu";
 import { MdMinimize } from "react-icons/md";
+import { BiCloud, BiUser, BiLogOut } from "react-icons/bi";
+import { FcGoogle } from "react-icons/fc";
+import { signOut, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { auth } from "../firebase/config";
 
 const { ipcRenderer } = window.electron;
 
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("English");
+  const [isLoading, setIsLoading] = useState(false);
   const languageMenuRef = useRef(null);
+  const authMenuRef = useRef(null);
 
   const handleCloseApp = async () => {
     try {
@@ -47,9 +56,45 @@ const Navbar = () => {
     setIsLanguageMenuOpen(!isLanguageMenuOpen);
   };
 
+  const toggleAuthMenu = () => {
+    setIsAuthMenuOpen(!isAuthMenuOpen);
+  };
+
   const handleLanguageSelect = (language) => {
     setSelectedLanguage(language);
     setIsLanguageMenuOpen(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setIsAuthMenuOpen(false);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      console.log("Google login successful:", {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+      });
+    } catch (error) {
+      console.error("Google login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setIsAuthMenuOpen(false);
+      console.log("User logged out successfully");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   // Close dropdown when clicking outside
@@ -57,6 +102,9 @@ const Navbar = () => {
     const handleClickOutside = (event) => {
       if (languageMenuRef.current && !languageMenuRef.current.contains(event.target)) {
         setIsLanguageMenuOpen(false);
+      }
+      if (authMenuRef.current && !authMenuRef.current.contains(event.target)) {
+        setIsAuthMenuOpen(false);
       }
     };
 
@@ -75,6 +123,69 @@ const Navbar = () => {
       </div>
 
       <div className="flex items-center justify-between gap-2 no-drag">
+        <div className="relative" ref={authMenuRef}>
+          <button
+            onClick={toggleAuthMenu}
+            disabled={isLoading}
+            className="flex shadow-sm items-center text-foreground gap-2 border border-foreground/20 hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors disabled:opacity-50"
+          >
+            {user ? (
+              <div className="flex items-center gap-2 justify-center">
+                <p className="text-[10px] opacity-50">Logged with: </p>
+                <span className="text-xs font-black max-w-24 truncate">{user.displayName || user.email}</span>
+                <HiChevronDown className={`w-3 h-3 transition-transform ${isAuthMenuOpen ? "rotate-180" : ""}`} />
+              </div>
+            ) : (
+              <>
+                <span className="text-xs">Login</span>
+                <HiChevronDown className={`w-3 h-3 transition-transform ${isAuthMenuOpen ? "rotate-180" : ""}`} />
+              </>
+            )}
+          </button>
+
+          {isAuthMenuOpen && (
+            <div className="absolute top-full left-0 mt-1 bg-sidebar border border-border rounded-md shadow-lg py-1 z-50 min-w-[180px]">
+              {user ? (
+                <>
+                  <div className="px-3 py-2 border-b border-border">
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-foreground">{user.displayName}</span>
+                        <span className="text-[10px] text-foreground/60">{user.email}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer text-foreground"
+                  >
+                    <BiLogOut className="w-4 h-4" />
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer text-foreground disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    <>
+                      <FcGoogle className="w-4 h-4" />
+                      Sign in with Google
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
         <div
           className="relative"
           ref={languageMenuRef}

@@ -875,3 +875,96 @@ const championMap = {
   875: "Sett", 876: "Lillia", 887: "Gwen", 888: "Renata Glasc", 895: "Nilah",
   897: "K'Sante", 901: "Smolder", 910: "Hwei", 950: "Naafiri"
 };
+
+// Export accounts handler
+ipcMain.handle('export-accounts', async () => {
+  try {
+    const { dialog } = await import('electron');
+    
+    // First, load current accounts file
+    const accountsFilePath = getAccountsFilePath();
+    
+    if (!fs.existsSync(accountsFilePath)) {
+      return { success: false, error: 'No accounts file found to export' };
+    }
+    
+    // Show save dialog
+    const result = await dialog.showSaveDialog({
+      title: 'Export Accounts',
+      defaultPath: `accounts_export_${new Date().toISOString().split('T')[0]}.json`,
+      filters: [
+        { name: 'JSON Files', extensions: ['json'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+
+    if (result.canceled) {
+      return { success: false, canceled: true };
+    }
+
+    // Read and copy the exact same file (with encrypted passwords)
+    const data = fs.readFileSync(accountsFilePath, 'utf8');
+    fs.writeFileSync(result.filePath, data);
+    
+    return { success: true, filePath: result.filePath };
+  } catch (error) {
+    console.error('Error exporting accounts:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Import accounts handler
+ipcMain.handle('import-accounts', async () => {
+  try {
+    const { dialog } = await import('electron');
+    
+    // Show open dialog
+    const result = await dialog.showOpenDialog({
+      title: 'Import Accounts',
+      filters: [
+        { name: 'JSON Files', extensions: ['json'] },
+        { name: 'All Files', extensions: ['*'] }
+      ],
+      properties: ['openFile']
+    });
+
+    if (result.canceled) {
+      return { success: false, canceled: true };
+    }
+
+    const filePath = result.filePaths[0];
+    
+    // Read the import file
+    const importData = fs.readFileSync(filePath, 'utf8');
+    
+    // Validate JSON format
+    let importedAccounts;
+    try {
+      importedAccounts = JSON.parse(importData);
+    } catch {
+      return { success: false, error: 'Invalid JSON file format' };
+    }
+    
+    // Validate the imported data structure
+    if (!Array.isArray(importedAccounts)) {
+      return { success: false, error: 'Invalid file format: expected an array of accounts' };
+    }
+    
+    // Get the current accounts file path
+    const currentAccountsFilePath = getAccountsFilePath();
+    
+    // Ensure directory exists
+    const dir = path.dirname(currentAccountsFilePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
+    // Replace the current accounts file with the imported one
+    fs.writeFileSync(currentAccountsFilePath, importData);
+    
+    return { success: true, importedCount: importedAccounts.length };
+  } catch (error) {
+    console.error('Error importing accounts:', error);
+    return { success: false, error: error.message };
+  }
+});

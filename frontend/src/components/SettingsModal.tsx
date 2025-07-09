@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { BiCheck, BiX, BiFolder, BiRefresh, BiPlay, BiDownload, BiInfoCircle, BiMedal, BiChevronDown } from "react-icons/bi";
-import { BsEyeFill, BsInfoCircleFill } from "react-icons/bs";
-import { GiSparkles } from "react-icons/gi";
+import { BsEyeFill } from "react-icons/bs";
 import { LuFolderSearch } from "react-icons/lu";
 import { PiGearBold } from "react-icons/pi";
-import { RiSparkling2Line } from "react-icons/ri";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -20,6 +18,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false);
   const [isUpdateDownloaded, setIsUpdateDownloaded] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
@@ -43,10 +42,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
         const handleDownloadProgress = (_event: any, progress: any) => {
           setDownloadProgress(progress.percent);
+          if (!isDownloadingUpdate) {
+            setIsDownloadingUpdate(true);
+          }
         };
 
         const handleUpdateDownloaded = () => {
           setIsUpdateDownloaded(true);
+          setIsDownloadingUpdate(false);
+          setDownloadProgress(100);
         };
 
         const handleUpdaterError = (_event: any, error: any) => {
@@ -165,6 +169,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const handleCheckForUpdates = async () => {
     setIsCheckingUpdate(true);
     setUpdateError(null);
+    setIsDownloadingUpdate(false);
+    setDownloadProgress(0);
+    setIsUpdateAvailable(false);
+    setIsUpdateDownloaded(false);
     try {
       const { ipcRenderer } = window.electron;
       const result = await ipcRenderer.invoke("check-for-updates");
@@ -183,12 +191,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   };
 
   const handleDownloadUpdate = async () => {
+    setIsDownloadingUpdate(true);
+    setUpdateError(null);
+    setDownloadProgress(0);
     try {
       const { ipcRenderer } = window.electron;
       await ipcRenderer.invoke("download-update");
     } catch (error) {
       console.error("Erro ao baixar atualização:", error);
       setUpdateError("Erro ao baixar atualização");
+      setIsDownloadingUpdate(false);
     }
   };
 
@@ -346,19 +358,25 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             <div className="space-y-3">
               {updateError && <div className="p-2 bg-red-600/20 text-red-400 rounded-sm text-xs">{updateError}</div>}
 
-              {isUpdateAvailable && !isUpdateDownloaded && (
+              {isUpdateAvailable && !isUpdateDownloaded && !isDownloadingUpdate && (
                 <div className="p-2 bg-blue-600/20 text-blue-400 rounded-sm text-xs">
                   Update available! Click download to get the latest version.
                 </div>
               )}
 
-              {isUpdateDownloaded && (
-                <div className="p-2 bg-green-600/20 text-green-400 rounded-sm text-xs">
-                  Update downloaded! Click install to apply the update.
+              {isDownloadingUpdate && (
+                <div className="p-2 bg-yellow-600/20 text-yellow-400 rounded-sm text-xs">
+                  Downloading update... Please wait.
                 </div>
               )}
 
-              {downloadProgress > 0 && downloadProgress < 100 && (
+              {isUpdateDownloaded && (
+                <div className="p-2 bg-green-600/20 text-green-400 rounded-sm text-xs">
+                  Update downloaded! Click install to apply the update and restart the application.
+                </div>
+              )}
+
+              {isDownloadingUpdate && downloadProgress > 0 && (
                 <div className="space-y-1">
                   <div className="text-xs text-foreground">Downloading update: {Math.round(downloadProgress)}%</div>
                   <div className="w-full bg-background/20 rounded-sm h-2">
@@ -385,10 +403,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   <button
                     type="button"
                     onClick={handleDownloadUpdate}
-                    className="flex-1 px-3 py-2 bg-blue-600/20 text-blue-400 rounded-sm hover:bg-blue-600/30 transition-colors flex items-center justify-center gap-2 hover:cursor-pointer"
+                    disabled={isDownloadingUpdate}
+                    className="flex-1 px-3 py-2 bg-blue-600/20 text-blue-400 rounded-sm hover:bg-blue-600/30 transition-colors flex items-center justify-center gap-2 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <BiDownload className="w-4 h-4" />
-                    Download Update
+                    {isDownloadingUpdate ? (
+                      <>
+                        <BiRefresh className="w-4 h-4 animate-spin" />
+                        Downloading...
+                      </>
+                    ) : (
+                      <>
+                        <BiDownload className="w-4 h-4" />
+                        Download Update
+                      </>
+                    )}
                   </button>
                 )}
 
