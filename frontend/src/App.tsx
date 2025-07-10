@@ -41,6 +41,7 @@ function App(): React.JSX.Element {
     forceUpdateSingleAccount,
     forceUpdateAll,
     syncWithFirebase,
+    forceUploadToFirebase,
   } = useAccounts();
 
   const { 
@@ -120,7 +121,14 @@ function App(): React.JSX.Element {
     try {
       setSyncMessage(null);
       const result = await syncWithFirebase();
-      setSyncMessage(result.message);
+      
+      if (result.requiresConfirmation) {
+        setSyncMessage("Dados já existem no Firebase. Use o botão de sincronização no menu.");
+      } else if (result.success) {
+        setSyncMessage(result.message || "Sincronizado com sucesso");
+      } else {
+        setSyncMessage("Nenhuma conta para sincronizar");
+      }
     } catch (error) {
       console.error("Error syncing with Firebase:", error);
       setSyncMessage("Erro na sincronização");

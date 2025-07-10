@@ -119,3 +119,6 @@ temp/
 # IDE specific
 *.swp
 *.swo
+
+#Instructions
+/.github

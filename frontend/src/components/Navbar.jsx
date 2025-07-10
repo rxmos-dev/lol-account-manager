@@ -8,6 +8,7 @@ import { IoMdClose } from "react-icons/io";
 import { BsTranslate } from "react-icons/bs";
 import { HiChevronDown } from "react-icons/hi";
 import SettingsModal from "./SettingsModal";
+import OverwriteConfirmationModal from "./OverwriteConfirmationModal";
 import { LuMaximize2 } from "react-icons/lu";
 import { MdMinimize } from "react-icons/md";
 import { BiCloud, BiUser, BiLogOut, BiStar } from "react-icons/bi";
@@ -22,10 +23,12 @@ const { ipcRenderer } = window.electron;
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
-  const { syncWithFirebase, isLoading: accountsLoading } = useAccounts();
+  const { syncWithFirebase, forceUploadToFirebase, isLoading: accountsLoading } = useAccounts();
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [syncModalData, setSyncModalData] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [isLoading, setIsLoading] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null);
@@ -108,30 +111,57 @@ const Navbar = () => {
 
   const handleSyncWithFirebase = async () => {
     if (!user) {
-      setSyncStatus('Faça login para sincronizar');
+      setSyncStatus('Login to sync');
       setTimeout(() => setSyncStatus(null), 3000);
       return;
     }
 
     try {
-      console.log('� Iniciando sincronização...');
-      console.log('👤 UID do usuário:', user.uid);
+      console.log('🔄 Starting sync...');
+      console.log('👤 User UID:', user.uid);
       
-      setSyncStatus('Sincronizando...');
+      setSyncStatus('Checking...');
       const result = await syncWithFirebase();
       
-      if (result && result.success) {
-        setSyncStatus('Sincronizado!');
+      if (result && result.requiresConfirmation) {
+        setSyncModalData({
+          existingAccountsCount: result.existingAccountsCount,
+          localAccountsCount: result.localAccountsCount
+        });
+        setIsSyncModalOpen(true);
+        setSyncStatus(null);
+      } else if (result && result.success) {
+        setSyncStatus('Synced!');
+        
+        setTimeout(() => setSyncStatus(null), 3000);
       } else {
-        setSyncStatus('Nenhuma conta');
+        setSyncStatus('No accounts');
+        setTimeout(() => setSyncStatus(null), 3000);
       }
-      
-      setTimeout(() => setSyncStatus(null), 3000);
     } catch (error) {
-      setSyncStatus('Erro na sincronização');
-      console.error('❌ Erro:', error.message);
+      setSyncStatus('Sync error');
+      console.error('❌ Error:', error.message);
       setTimeout(() => setSyncStatus(null), 5000);
     }
+  };
+
+  const handleConfirmSync = async () => {
+    try {
+      setSyncStatus('Syncing...');
+      setIsSyncModalOpen(false);
+      await forceUploadToFirebase();
+      setSyncStatus('Synced!');
+      setTimeout(() => setSyncStatus(null), 3000);
+    } catch (error) {
+      setSyncStatus('Sync error');
+      console.error('❌ Error:', error.message);
+      setTimeout(() => setSyncStatus(null), 5000);
+    }
+  };
+
+  const handleCancelSync = () => {
+    setIsSyncModalOpen(false);
+    setSyncModalData(null);
   };
 
   // Close dropdown when clicking outside
@@ -164,7 +194,7 @@ const Navbar = () => {
           onClick={handleSyncWithFirebase}
           disabled={isLoading || accountsLoading || !user}
           className="flex shadow-sm border items-center text-foreground gap-2 border-foreground/20 hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors disabled:opacity-50"
-          title={syncStatus || (user ? "Sincronizar com Firebase" : "Faça login para sincronizar")}
+          title={syncStatus || (user ? "Sync with Firebase" : "Login to sync")}
         >
           <WiCloudRefresh className={`w-4 h-4 ${(isLoading || accountsLoading) ? 'animate-spin' : ''}`} />
           <span className="text-xs font-normal">{syncStatus || 'Sync'}</span>
@@ -315,6 +345,14 @@ const Navbar = () => {
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
+      />
+      
+      <OverwriteConfirmationModal
+        isOpen={isSyncModalOpen}
+        onClose={handleCancelSync}
+        onConfirm={handleConfirmSync}
+        localAccountsCount={syncModalData?.localAccountsCount || 0}
+        existingAccountsCount={syncModalData?.existingAccountsCount || 0}
       />
     </nav>
   );
