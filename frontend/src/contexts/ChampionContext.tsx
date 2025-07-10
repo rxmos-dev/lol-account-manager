@@ -3,6 +3,7 @@ import { useChampionData } from '../hooks/useChampionData';
 
 interface ChampionContextType {
   championMap: { [key: string]: string };
+  championIdMap: { [key: string]: string };
   isLoading: boolean;
   error: string | null;
   getChampionNameById: (championId: number) => string;

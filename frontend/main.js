@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
 import { exec } from 'child_process';
@@ -71,7 +71,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
     height: 700,
-
+    autoHideMenuBar: true,
     maximizable: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -849,6 +849,7 @@ const loadConfig = () => {
 };
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
   loadConfig();
   createWindow();
 

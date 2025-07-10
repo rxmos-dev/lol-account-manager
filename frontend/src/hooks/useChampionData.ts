@@ -5,6 +5,7 @@ interface ChampionData {
   [key: string]: {
     key: string;
     name: string;
+    id: string;
     image: {
       full: string;
     };
@@ -13,6 +14,7 @@ interface ChampionData {
 
 export const useChampionData = () => {
   const [championMap, setChampionMap] = useState<{ [key: string]: string }>({});
+  const [championIdMap, setChampionIdMap] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,12 +28,15 @@ export const useChampionData = () => {
       );
       const champions: ChampionData = response.data.data;
       const newChampionMap: { [key: string]: string } = {};
+      const newChampionIdMap: { [key: string]: string } = {};
       
       for (const key in champions) {
         newChampionMap[champions[key].key] = champions[key].name;
+        newChampionIdMap[champions[key].key] = champions[key].id;
       }
       
       setChampionMap(newChampionMap);
+      setChampionIdMap(newChampionIdMap);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao buscar dados dos campeões');
     } finally {
@@ -41,18 +46,17 @@ export const useChampionData = () => {
 
   // Obtém nome do campeão por ID
   const getChampionNameById = useCallback((championId: number): string => {
-    return championMap[championId] || "?";
+    return championMap[championId.toString()] || "?";
   }, [championMap]);
 
   // Obtém ícone do campeão por ID
   const getChampionIcon = useCallback((championId: number): string => {
-    const championName = getChampionNameById(championId);
-    if (!championName || championName === "?") {
-      return "https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/Ashe.png"; // fallback
+    const championInternalId = championIdMap[championId.toString()];
+    if (!championInternalId) {
+      return "https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/Ashe.png";
     }
-    const formattedChampionName = championName.replace(/[^a-zA-Z0-9]/g, '');
-    return `https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/${formattedChampionName}.png`;
-  }, [getChampionNameById]);
+    return `https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/${championInternalId}.png`;
+  }, [championIdMap]);
 
   // Calcula winrate simulado baseado nos pontos de maestria
   const calculateMasteryWinrate = useCallback((championPoints: number): number => {
@@ -69,6 +73,7 @@ export const useChampionData = () => {
 
   return {
     championMap,
+    championIdMap,
     isLoading,
     error,
     fetchChampionData,
@@ -81,17 +86,16 @@ export const useChampionData = () => {
 // Exporta as funções utilitárias para uso direto em outros componentes
 export const getChampionNameById = (championMap: { [key: string]: string }) => 
   (championId: number): string => {
-    return championMap[championId] || "?";
+    return championMap[championId.toString()] || "?";
   };
 
-export const getChampionIcon = (championMap: { [key: string]: string }) => 
+export const getChampionIcon = (championIdMap: { [key: string]: string }) => 
   (championId: number): string => {
-    const championName = championMap[championId] || "?";
-    if (!championName || championName === "?") {
-      return "https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/Ashe.png"; // fallback
+    const championInternalId = championIdMap[championId.toString()];
+    if (!championInternalId) {
+      return "https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/Ashe.png";
     }
-    const formattedChampionName = championName.replace(/[^a-zA-Z0-9]/g, '');
-    return `https://ddragon.leagueoflegends.com/cdn/15.12.1/img/champion/${formattedChampionName}.png`;
+    return `https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/${championInternalId}.png`;
   };
 
 export const calculateMasteryWinrateUtil = (championPoints: number): number => {

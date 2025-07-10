@@ -35,30 +35,6 @@ const Navbar = () => {
   const languageMenuRef = useRef(null);
   const authMenuRef = useRef(null);
 
-  const handleCloseApp = async () => {
-    try {
-      await ipcRenderer.invoke("close-app");
-    } catch (error) {
-      console.error("Erro ao fechar aplicação:", error);
-    }
-  };
-
-  const handleMinimizeApp = async () => {
-    try {
-      await ipcRenderer.invoke("minimize-app");
-    } catch (error) {
-      console.error("Erro ao minimizar aplicação:", error);
-    }
-  };
-
-  const handleMaximizeApp = async () => {
-    try {
-      await ipcRenderer.invoke("maximize-app");
-    } catch (error) {
-      console.error("Erro ao maximizar aplicação:", error);
-    }
-  };
-
   const toggleLanguageMenu = () => {
     setIsLanguageMenuOpen(!isLanguageMenuOpen);
   };
