@@ -84,9 +84,10 @@ function createWindow() {
     return {
       action: 'allow',
       overrideBrowserWindowOptions: {
-    
         width: 500,
         height: 600,
+        autoHideMenuBar: true,
+        maximizable: false,
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true
