@@ -75,6 +75,7 @@ function createWindow() {
     maximizable: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
+      webSecurity: false,
     },
   });
 

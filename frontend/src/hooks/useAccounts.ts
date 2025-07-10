@@ -9,7 +9,6 @@ import {
   forceUpdateAllAccounts 
 } from '../utils/accountsManager';
 import { useRiotApi } from './useRiotApi';
-import { useFirebaseSync } from './useFirebaseSync';
 
 export const useAccounts = () => {
   const [accounts, setAccounts] = useState<AccountData[]>([]);
@@ -21,16 +20,8 @@ export const useAccounts = () => {
     error: apiError 
   } = useRiotApi();
 
-  const { 
-    uploadToFirebase,
-    checkExistingData,
-    isSyncing, 
-    syncError 
-  } = useFirebaseSync();
-
-  // Combina loading states
-  const isLoadingCombined = isLoading || apiLoading || isSyncing;
-  const errorCombined = error || apiError?.message || syncError || null;
+  const isLoadingCombined = isLoading || apiLoading;
+  const errorCombined = error || apiError?.message || null;
 
   // Carrega contas iniciais
   const loadInitialAccounts = useCallback(async () => {
@@ -137,97 +128,6 @@ export const useAccounts = () => {
     }
   }, [accounts]);
 
-  // Sincronização com Firebase (usando conteúdo bruto do arquivo)
-  const syncWithFirebase = useCallback(async () => {
-    try {
-      setError(null);
-      
-      const existingData = await checkExistingData();
-      const rawAccounts = await loadAccountsRaw();
-      
-      if (rawAccounts.length === 0) {
-        return { success: false, message: 'No accounts to sync' };
-      }
-      
-      if (!existingData || existingData.length === 0) {
-        await uploadToFirebase(rawAccounts);
-        return { success: true, message: 'Data sent to Firebase' };
-      }
-      
-      const localAccountsMap = new Map(rawAccounts.map(acc => [acc.username, acc]));
-      const remoteAccountsMap = new Map(existingData.map(acc => [acc.username, acc]));
-      
-      const conflicts = {
-        localNewer: [] as string[],
-        remoteNewer: [] as string[],
-        onlyLocal: [] as string[],
-        onlyRemote: [] as string[]
-      };
-      
-      for (const [username, localAcc] of localAccountsMap) {
-        const remoteAcc = remoteAccountsMap.get(username);
-        if (!remoteAcc) {
-          conflicts.onlyLocal.push(username);
-        } else {
-          const localTime = localAcc.lastUpdated || 0;
-          const remoteTime = remoteAcc.lastUpdated || 0;
-          if (localTime > remoteTime) {
-            conflicts.localNewer.push(username);
-          } else if (remoteTime > localTime) {
-            conflicts.remoteNewer.push(username);
-          }
-        }
-      }
-      
-      for (const [username] of remoteAccountsMap) {
-        if (!localAccountsMap.has(username)) {
-          conflicts.onlyRemote.push(username);
-        }
-      }
-      
-      const hasConflicts = conflicts.localNewer.length > 0 || 
-                          conflicts.remoteNewer.length > 0 || 
-                          conflicts.onlyLocal.length > 0 || 
-                          conflicts.onlyRemote.length > 0;
-      
-      if (!hasConflicts) {
-        return { success: true, message: 'Data already synced' };
-      }
-      
-      if (conflicts.onlyLocal.length === rawAccounts.length && 
-          conflicts.remoteNewer.length === 0 && 
-          conflicts.onlyRemote.length === 0) {
-        await uploadToFirebase(rawAccounts);
-        return { success: true, message: 'New accounts uploaded to Firebase' };
-      }
-      
-      return { 
-        success: false, 
-        requiresConfirmation: true,
-        existingAccountsCount: existingData.length,
-        localAccountsCount: rawAccounts.length,
-        conflictDetails: conflicts
-      };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error sending to Firebase';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    }
-  }, [uploadToFirebase, checkExistingData]);
-
-  const forceUploadToFirebase = useCallback(async () => {
-    try {
-      setError(null);
-      const rawAccounts = await loadAccountsRaw();
-      await uploadToFirebase(rawAccounts);
-      return { success: true, message: 'Data sent to Firebase' };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error sending to Firebase';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    }
-  }, [uploadToFirebase]);
-
   return {
     accounts,
     isLoading: isLoadingCombined,
@@ -238,8 +138,6 @@ export const useAccounts = () => {
     removeAccount,
     forceUpdateSingleAccount,
     forceUpdateAll,
-    syncWithFirebase,
-    forceUploadToFirebase,
     setAccounts,
   };
 };
