@@ -71,7 +71,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
     height: 700,
-    frame: false,
+
     maximizable: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -83,7 +83,7 @@ function createWindow() {
     return {
       action: 'allow',
       overrideBrowserWindowOptions: {
-        frame: false,
+    
         width: 500,
         height: 600,
         webPreferences: {
@@ -532,6 +532,26 @@ ipcMain.handle('load-accounts', async () => {
     return decryptedAccounts;
   } catch (error) {
     console.error('Erro ao carregar contas:', error);
+    return [];
+  }
+});
+
+// Handler para carregar contas sem descriptografar (conteúdo bruto do arquivo)
+ipcMain.handle('load-accounts-raw', async () => {
+  try {
+    const accountsFilePath = getAccountsFilePath();
+
+    if (!fs.existsSync(accountsFilePath)) {
+      return [];
+    }
+
+    const data = fs.readFileSync(accountsFilePath, 'utf8');
+    const accounts = JSON.parse(data);
+
+    // Retorna as contas sem descriptografar (como estão no arquivo)
+    return accounts;
+  } catch (error) {
+    console.error('Erro ao carregar contas brutas:', error);
     return [];
   }
 });

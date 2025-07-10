@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { 
   AccountData, 
   loadAccounts, 
+  loadAccountsRaw,
   saveAccounts, 
   updateAccountsWithPuuids,
   forceUpdateAccount,
@@ -21,7 +22,7 @@ export const useAccounts = () => {
   } = useRiotApi();
 
   const { 
-    bidirectionalSync, 
+    uploadToFirebase,
     isSyncing, 
     syncError 
   } = useFirebaseSync();
@@ -135,20 +136,20 @@ export const useAccounts = () => {
     }
   }, [accounts]);
 
-  // Sincronização bidirecional com Firebase
+  // Sincronização com Firebase (usando conteúdo bruto do arquivo)
   const syncWithFirebase = useCallback(async () => {
     try {
       setError(null);
-      const syncedAccounts = await bidirectionalSync(accounts);
-      setAccounts(syncedAccounts);
-      await saveAccounts(syncedAccounts);
-      return { success: true, message: 'Sincronização concluída com sucesso' };
+      // Carregar as contas diretamente do arquivo SEM descriptografar
+      const rawAccounts = await loadAccountsRaw();
+      await uploadToFirebase(rawAccounts);
+      return { success: true, message: 'Dados enviados para Firebase' };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao sincronizar com Firebase';
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao enviar para Firebase';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
-  }, [accounts, bidirectionalSync]);
+  }, [uploadToFirebase]);
 
   // Salva automaticamente quando as contas mudam
   useEffect(() => {

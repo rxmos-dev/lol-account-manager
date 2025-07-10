@@ -82,14 +82,36 @@ export const loadAccounts = async (): Promise<AccountData[]> => {
     if (isElectron()) {
       // Usando IPC do Electron
       const { ipcRenderer } = window.electron;
-      return await ipcRenderer.invoke("load-accounts");
+      const accounts = await ipcRenderer.invoke("load-accounts");
+      return accounts;
     } else {
       // Fallback para localStorage em desenvolvimento
       const stored = localStorage.getItem("accounts");
-      return stored ? JSON.parse(stored) : [];
+      const accounts = stored ? JSON.parse(stored) : [];
+      return accounts;
     }
   } catch (error) {
     console.error("Erro ao carregar contas:", error);
+    return [];
+  }
+};
+
+// Função para carregar contas sem descriptografar (conteúdo bruto do arquivo)
+export const loadAccountsRaw = async (): Promise<AccountData[]> => {
+  try {
+    if (isElectron()) {
+      // Usando IPC do Electron para dados brutos
+      const { ipcRenderer } = window.electron;
+      const accounts = await ipcRenderer.invoke("load-accounts-raw");
+      return accounts;
+    } else {
+      // Fallback para localStorage em desenvolvimento
+      const stored = localStorage.getItem("accounts");
+      const accounts = stored ? JSON.parse(stored) : [];
+      return accounts;
+    }
+  } catch (error) {
+    console.error("Erro ao carregar contas brutas:", error);
     return [];
   }
 };

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -12,6 +12,8 @@ import { AccountData } from "./utils/accountsManager";
 import Footer from "./components/Footer";
 import { useAccounts, useEloData, useAhriIcon, useViewMode, useModals } from "./hooks";
 import { LuFileJson, LuFileJson2, LuRefreshCw } from "react-icons/lu";
+import { SyncAlert, SyncControls } from "./components/SyncAlert";
+import { useFirebaseSync } from "./hooks/useFirebaseSync";
 
 // Re-exporta as funções utilitárias para uso em outros componentes
 export {
@@ -25,7 +27,9 @@ export {
 } from "./utils/gameUtils";
 
 function App(): React.JSX.Element {
-  const [isAddingAccount, setIsAddingAccount] = React.useState(false);
+  const [isAddingAccount, setIsAddingAccount] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  
   // Hooks customizados
   const {
     accounts,
@@ -36,7 +40,12 @@ function App(): React.JSX.Element {
     removeAccount,
     forceUpdateSingleAccount,
     forceUpdateAll,
+    syncWithFirebase,
   } = useAccounts();
+
+  const { 
+    isAuthenticated 
+  } = useFirebaseSync();
 
   const { sortAccountsByElo } = useEloData();
 
@@ -103,6 +112,18 @@ function App(): React.JSX.Element {
       await forceUpdateAll();
     } catch (error) {
       console.error("Error refreshing all accounts:", error);
+    }
+  };
+
+  // Função de sincronização
+  const handleSyncRequest = async () => {
+    try {
+      setSyncMessage(null);
+      const result = await syncWithFirebase();
+      setSyncMessage(result.message);
+    } catch (error) {
+      console.error("Error syncing with Firebase:", error);
+      setSyncMessage("Erro na sincronização");
     }
   };
 
@@ -228,6 +249,16 @@ function App(): React.JSX.Element {
                         <LuRefreshCw className={`w-3 h-3 ${isLoadingAccounts ? "animate-spin" : ""}`} />
                         refresh
                       </button>
+
+                      {/* Controles de Sincronização */}
+                      {isAuthenticated && (
+                        <>
+                          <hr className="border border-foreground/20 h-6 mx-2" />
+                          <SyncControls
+                            onSyncRequested={handleSyncRequest}
+                          />
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -283,6 +314,24 @@ function App(): React.JSX.Element {
                 </>
               )}
             </div>
+
+            {/* Mensagem de Sincronização */}
+            {syncMessage && (
+              <div className="fixed top-20 left-4 z-50 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg">
+                <span className="text-sm">{syncMessage}</span>
+                <button
+                  onClick={() => setSyncMessage(null)}
+                  className="ml-2 text-white hover:text-gray-200"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {/* Alerta de Sincronização */}
+            <SyncAlert
+              onSyncRequested={handleSyncRequest}
+            />
 
             <Footer />
 
