@@ -183,8 +183,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         setUpdateError(result.error);
       }
     } catch (error) {
-      console.error("Erro ao verificar atualizações:", error);
-      setUpdateError("Erro ao verificar atualizações");
+      console.error("Error checking for updates:", error);
+      setUpdateError("Error checking for updates");
     } finally {
       setIsCheckingUpdate(false);
     }
@@ -198,8 +198,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       const { ipcRenderer } = window.electron;
       await ipcRenderer.invoke("download-update");
     } catch (error) {
-      console.error("Erro ao baixar atualização:", error);
-      setUpdateError("Erro ao baixar atualização");
+      console.error("Error downloading update:", error);
+      setUpdateError("Error downloading update");
       setIsDownloadingUpdate(false);
     }
   };

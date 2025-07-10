@@ -103,7 +103,7 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
     try {
       onRefresh(account);
     } catch (error) {
-      console.error("Erro ao atualizar dados da conta:", error);
+      console.error("Error updating account data:", error);
     } finally {
       setIsRefreshing(false);
     }
@@ -135,7 +135,7 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
               onClick={() => setShowOptionsMenu(!showOptionsMenu)}
               className="rounded-md p-2 bg-sidebar transition-colors hover:cursor-pointer hover:bg-background"
               aria-label="Options menu"
-              title="Menu de opções"
+              title="Options menu"
             >
               <FiMoreHorizontal />
             </button>
@@ -187,7 +187,7 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
               </div>
               {account.lastUpdated && (
                 <p className="text-[10px] text-foreground opacity-30">
-                  Última atualização: {new Date(account.lastUpdated).toLocaleString("pt-BR")}
+                  Last updated: {new Date(account.lastUpdated).toLocaleString("en-US")}
                 </p>
               )}
             </div>
@@ -312,14 +312,14 @@ const AccountDetailsModal: React.FC<AccountDetailsModalProps> = ({
               <button
                 onClick={() => setShowPassword(!showPassword)}
                 className="h-[46px] px-4 bg-background/20 text-foreground rounded-sm hover:bg-background/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
-                title={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                title={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <BiHide className="w-4 h-4" /> : <BiShow className="w-4 h-4" />}
               </button>
               <button
                 onClick={() => copyToClipboard(editableAccount.password, "password")}
                 className="h-[46px] px-4 bg-primary/20 text-primary rounded-sm hover:bg-primary/30 transition-colors flex items-center gap-2 hover:cursor-pointer"
-                title="Copy senha"
+                title="Copy password"
               >
                 {copiedField === "password" ? (
                   <BiCheck className="w-4 h-4 text-green-500" />

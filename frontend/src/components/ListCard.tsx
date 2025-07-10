@@ -8,11 +8,10 @@ interface ListCardProps {
   account: AccountData;
   index: number;
   onClick: (account: AccountData) => void;
-  ahriIcon: string | null;
   isLoadingElo: boolean;
 }
 
-const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, isLoadingElo }) => {
+const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, isLoadingElo }) => {
   const { getChampionNameById, getChampionIcon } = useChampion();
 
   const eloInfo = formatEloData(account.eloData);
@@ -100,7 +99,7 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
                     alt={`Champion ${mastery.championId}`}
                     className="w-10 h-10 rounded-lg shadow-sm"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = ahriIcon || "";
+                      (e.target as HTMLImageElement).src = "https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/Ashe.png";
                     }}
                   />
                   <p className="text-[8px] text-muted-foreground uppercase">

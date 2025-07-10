@@ -38,7 +38,7 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="fixed z-50 w-full bg-secondary px-2 py-0.5 justify-between flex items-center drag-region">
+    <nav className="fixed z-50 w-full bg-secondary px-5 py-1 justify-between flex items-center drag-region">
       <div className="flex font-semibold items-center text-foreground gap-2 text-sm">
         <SiLeagueoflegends className="text-green-500" />
         <p className="text-[9px] font-sans opacity-20">#buildinpublic</p>
@@ -69,12 +69,12 @@ const Navbar = () => {
                 <p className="text-[9px] opacity-40">[en_US]</p>
               </button>
               <button
-                onClick={() => handleLanguageSelect("Português")}
+                onClick={() => handleLanguageSelect("Portuguese")}
                 className={`flex flex-row gap-1 items-center w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer ${
-                  selectedLanguage === "Português" ? "text-green-500" : "text-foreground"
+                  selectedLanguage === "Portuguese" ? "text-green-500" : "text-foreground"
                 }`}
               >
-                Português
+                Portuguese
                 <p className="text-[9px] opacity-40">[pt_BR]</p>
               </button>
             </div>

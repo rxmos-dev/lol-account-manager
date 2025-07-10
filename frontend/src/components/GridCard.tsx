@@ -8,11 +8,10 @@ interface GridCardProps {
   account: AccountData;
   index: number;
   onClick: (account: AccountData) => void;
-  ahriIcon: string | null;
   isLoadingElo: boolean;
 }
 
-const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, isLoadingElo }) => {
+const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, isLoadingElo }) => {
   const { getChampionNameById, getChampionIcon } = useChampion();
 
   const isDataFresh = () => {
@@ -93,8 +92,7 @@ const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, 
                 alt={`Champion ${mastery.championId}`}
                 className="w-8 h-8 rounded-sm"
                 onError={(e) => {
-                  // Fallback para Ahri se o ícone não carregar
-                  (e.target as HTMLImageElement).src = ahriIcon || "";
+                  (e.target as HTMLImageElement).src = "https://ddragon.leagueoflegends.com/cdn/15.13.1/img/champion/Ashe.png";
                 }}
               />
 

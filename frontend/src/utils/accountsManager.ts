@@ -58,7 +58,6 @@ const isElectron = () => {
   return window && window.electron;
 };
 
-// Função para salvar contas
 export const saveAccounts = async (accounts: AccountData[]): Promise<boolean> => {
   try {
     if (isElectron()) {
@@ -72,12 +71,11 @@ export const saveAccounts = async (accounts: AccountData[]): Promise<boolean> =>
       return true;
     }
   } catch (error) {
-    console.error("Erro ao salvar contas:", error);
+    console.error("Error saving accounts:", error);
     return false;
   }
 };
 
-// Função para carregar contas
 export const loadAccounts = async (): Promise<AccountData[]> => {
   try {
     if (isElectron()) {
@@ -92,12 +90,11 @@ export const loadAccounts = async (): Promise<AccountData[]> => {
       return accounts;
     }
   } catch (error) {
-    console.error("Erro ao carregar contas:", error);
+    console.error("Error loading accounts:", error);
     return [];
   }
 };
 
-// Função para carregar contas sem descriptografar (conteúdo bruto do arquivo)
 export const loadAccountsRaw = async (): Promise<AccountData[]> => {
   try {
     if (isElectron()) {
@@ -112,12 +109,11 @@ export const loadAccountsRaw = async (): Promise<AccountData[]> => {
       return accounts;
     }
   } catch (error) {
-    console.error("Erro ao carregar contas brutas:", error);
+    console.error("Error loading raw accounts:", error);
     return [];
   }
 };
 
-// Função para buscar PUUID via API hospedada
 export const fetchPuuid = async (summonerName: string, tagline: string): Promise<string | null> => {
   try {
     const response = await axios.post(`${API_BASE_URL}${ApiEndpoints.PUUID}`, {
@@ -127,19 +123,17 @@ export const fetchPuuid = async (summonerName: string, tagline: string): Promise
   
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar PUUID:', error);
+    console.error('Error fetching PUUID:', error);
     return null;
   }
 };
 
-// Função para verificar se os dados precisam ser atualizados
 const needsUpdate = (lastUpdated?: number): boolean => {
   if (!lastUpdated) return true;
   const now = Date.now();
   return (now - lastUpdated) > CACHE_DURATION;
 };
 
-// Função para atualizar accounts com PUUIDs e dados de elo
 export const updateAccountsWithPuuids = async (accounts: AccountData[]): Promise<AccountData[]> => {
   const updatedAccounts = await Promise.all(
     accounts.map(async (account) => {
@@ -187,7 +181,6 @@ export const updateAccountsWithPuuids = async (accounts: AccountData[]): Promise
   return updatedAccounts;
 };
 
-// Função para buscar dados de elo via API hospedada
 export const fetchEloData = async (summonerName: string, tagline: string): Promise<any> => {
   try {
     const response = await axios.post(`${API_BASE_URL}${ApiEndpoints.ELO}`, {
@@ -197,12 +190,11 @@ export const fetchEloData = async (summonerName: string, tagline: string): Promi
     
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar dados de elo:', error);
+    console.error('Error fetching elo data:', error);
     return null;
   }
 };
 
-// Função para buscar maestrias de campeões via API hospedada
 export const fetchChampionMasteries = async (summonerName: string, tagline: string): Promise<ChampionMastery[] | null> => {
   try {
     const response = await axios.post(`${API_BASE_URL}${ApiEndpoints.CHAMPION_MASTERIES}`, {
@@ -212,12 +204,11 @@ export const fetchChampionMasteries = async (summonerName: string, tagline: stri
     
     return response.data.championMasteriesData;
   } catch (error) {
-    console.error('Erro ao buscar maestrias de campeões:', error);
+    console.error('Error fetching champion masteries:', error);
     return null;
   }
 };
 
-// Função para buscar dados da lane principal via API hospedada
 export const fetchSummonerLane = async (summonerName: string, tagline: string): Promise<SummonerLaneData | null> => {
   try {
     const response = await axios.post(`${API_BASE_URL}${ApiEndpoints.SUMMONER_LANE}`, {
@@ -227,12 +218,11 @@ export const fetchSummonerLane = async (summonerName: string, tagline: string): 
     
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar dados da lane principal:', error);
+    console.error('Error fetching summoner lane data:', error);
     return null;
   }
 };
 
-// Função para deletar uma conta
 export const deleteAccount = async (username: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (isElectron()) {
@@ -254,7 +244,6 @@ export const deleteAccount = async (username: string): Promise<void> => {
   });
 };
 
-// Função para atualizar uma conta
 export const updateAccount = async (updatedAccount: Account): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (isElectron()) {
@@ -275,13 +264,12 @@ export const updateAccount = async (updatedAccount: Account): Promise<void> => {
         localStorage.setItem("accounts", JSON.stringify(accounts));
         resolve();
       } else {
-        reject(new Error("Conta não encontrada"));
+        reject(new Error("Account not found"));
       }
     }
   });
 }
 
-// Função para forçar atualização dos dados de uma conta específica
 export const forceUpdateAccount = async (account: AccountData): Promise<AccountData> => {
   let updatedAccount = { ...account };
   
@@ -317,7 +305,6 @@ export const forceUpdateAccount = async (account: AccountData): Promise<AccountD
   return updatedAccount;
 };
 
-// Função para forçar atualização de todas as contas
 export const forceUpdateAllAccounts = async (accounts: AccountData[]): Promise<AccountData[]> => {
 
   const updatedAccounts = await Promise.all(
@@ -326,13 +313,12 @@ export const forceUpdateAllAccounts = async (accounts: AccountData[]): Promise<A
         const updatedData = await window.electron.getAccountData(account.username, account.password, account.region);
         return { ...account, ...updatedData, lastUpdated: Date.now() };
       } catch (error) {
-        console.error(`Erro ao atualizar dados para ${account.summonerName}#${account.tagline}:`, error);
-        return account; // Retorna os dados originais em caso de erro
+        console.error(`Error updating data for ${account.summonerName}#${account.tagline}:`, error);
+        return account;
       }
     })
   );
 
-  // Salva as contas atualizadas
   await saveAccounts(updatedAccounts);
 
   return updatedAccounts;

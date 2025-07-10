@@ -69,7 +69,6 @@ export const getTierBorderColor = (tier: string): string => {
   }
 };
 
-// Função para ordenar contas por elo (do mais alto para o mais baixo)
 export const sortAccountsByElo = (accounts: AccountData[]): AccountData[] => {
   const tierOrder = {
     CHALLENGER: 8,
