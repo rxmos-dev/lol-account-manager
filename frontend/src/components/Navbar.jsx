@@ -111,50 +111,50 @@ const Navbar = () => {
 
   const handleSyncWithFirebase = async () => {
     if (!user) {
-      setSyncStatus('Login to sync');
+      setSyncStatus("Login to sync");
       setTimeout(() => setSyncStatus(null), 3000);
       return;
     }
 
     try {
-      console.log('🔄 Starting sync...');
-      console.log('👤 User UID:', user.uid);
-      
-      setSyncStatus('Checking...');
+      console.log("🔄 Starting sync...");
+      console.log("👤 User UID:", user.uid);
+
+      setSyncStatus("Checking...");
       const result = await syncWithFirebase();
-      
+
       if (result && result.requiresConfirmation) {
         setSyncModalData({
           existingAccountsCount: result.existingAccountsCount,
-          localAccountsCount: result.localAccountsCount
+          localAccountsCount: result.localAccountsCount,
         });
         setIsSyncModalOpen(true);
         setSyncStatus(null);
       } else if (result && result.success) {
-        setSyncStatus('Synced!');
-        
+        setSyncStatus("Synced!");
+
         setTimeout(() => setSyncStatus(null), 3000);
       } else {
-        setSyncStatus('No accounts');
+        setSyncStatus("No accounts");
         setTimeout(() => setSyncStatus(null), 3000);
       }
     } catch (error) {
-      setSyncStatus('Sync error');
-      console.error('❌ Error:', error.message);
+      setSyncStatus("Sync error");
+      console.error("❌ Error:", error.message);
       setTimeout(() => setSyncStatus(null), 5000);
     }
   };
 
   const handleConfirmSync = async () => {
     try {
-      setSyncStatus('Syncing...');
+      setSyncStatus("Syncing...");
       setIsSyncModalOpen(false);
       await forceUploadToFirebase();
-      setSyncStatus('Synced!');
+      setSyncStatus("Synced!");
       setTimeout(() => setSyncStatus(null), 3000);
     } catch (error) {
-      setSyncStatus('Sync error');
-      console.error('❌ Error:', error.message);
+      setSyncStatus("Sync error");
+      console.error("❌ Error:", error.message);
       setTimeout(() => setSyncStatus(null), 5000);
     }
   };
@@ -182,14 +182,64 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="fixed z-50 w-full bg-secondary p-2.5 border-b border-border shadow-sm justify-between flex items-center drag-region">
+    <nav className="fixed z-50 w-full bg-secondary px-2 py-0.5 justify-between flex items-center drag-region">
       <div className="flex font-semibold items-center text-foreground gap-2 text-sm">
         <SiLeagueoflegends className="text-green-500" />
-        <p>ACCOUNT MANAGER</p>
         <p className="text-[9px] font-sans opacity-20">#buildinpublic</p>
       </div>
 
       <div className="flex items-center justify-between gap-2 no-drag">
+        <div
+          className="relative"
+          ref={languageMenuRef}
+        >
+          <button
+            onClick={toggleLanguageMenu}
+            className="flex shadow-sm items-center text-foreground gap-2  hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
+          >
+            <BsTranslate className="w-3.5 h-3.5" />
+            <HiChevronDown className={`w-3.5 h-3.5 transition-transform ${isLanguageMenuOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {isLanguageMenuOpen && (
+            <div className="absolute top-full right-0 mt-1 bg-sidebar border border-border rounded-md shadow-lg py-1 z-50 min-w-[120px]">
+              <button
+                onClick={() => handleLanguageSelect("English")}
+                className={`flex flex-row gap-1 items-center w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer ${
+                  selectedLanguage === "English" ? "text-green-500" : "text-foreground"
+                }`}
+              >
+                English
+                <p className="text-[9px] opacity-40">[en_US]</p>
+              </button>
+              <button
+                onClick={() => handleLanguageSelect("Português")}
+                className={`flex flex-row gap-1 items-center w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer ${
+                  selectedLanguage === "Português" ? "text-green-500" : "text-foreground"
+                }`}
+              >
+                Português
+                <p className="text-[9px] opacity-40">[pt_BR]</p>
+              </button>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={toggleTheme}
+          className="flex shadow-sm items-center text-foreground gap-2 hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
+          title={`Alternar para modo ${theme === "dark" ? "claro" : "escuro"}`}
+        >
+          {theme === "dark" ? <HiSun className="w-3.5 h-3.5" /> : <HiMoon className="w-3.5 h-3.5" />}
+        </button>
+
+        <button
+          onClick={() => setIsSettingsModalOpen(true)}
+          className="flex shadow-sm items-center text-foreground gap-2  hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
+        >
+          <PiGearBold className="w-3.5 h-3.5" />
+        </button>
+
         <div
           className="relative"
           ref={authMenuRef}
@@ -205,19 +255,19 @@ const Navbar = () => {
                   <BiStar className="text-yellow-400 w-2 h-2" />
                   premium
                 </div>
-                <span className="text-xs font-normal truncate">{user.displayName || user.email}</span>
-                <HiChevronDown className={`w-3 h-3 transition-transform ${isAuthMenuOpen ? "rotate-180" : ""}`} />
+                
+                <HiChevronDown className={`w-3.5 h-3.5 transition-transform ${isAuthMenuOpen ? "rotate-180" : ""}`} />
               </div>
             ) : (
               <>
                 <span className="text-xs">Login</span>
-                <HiChevronDown className={`w-3 h-3 transition-transform ${isAuthMenuOpen ? "rotate-180" : ""}`} />
+                <HiChevronDown className={`w-3.5 h-3.5 transition-transform ${isAuthMenuOpen ? "rotate-180" : ""}`} />
               </>
             )}
           </button>
 
           {isAuthMenuOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-sidebar border border-border rounded-md shadow-lg py-1 z-50 min-w-[180px]">
+            <div className="absolute top-full right-0 mt-1 bg-sidebar border border-border rounded-md shadow-lg py-1 z-50 min-w-[180px]">
               {user ? (
                 <>
                   <div className="px-3 py-2 border-b border-border">
@@ -233,8 +283,8 @@ const Navbar = () => {
                     disabled={isLoading || accountsLoading}
                     className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer text-foreground disabled:opacity-50"
                   >
-                    <WiCloudRefresh className={`w-4 h-4 ${(isLoading || accountsLoading) ? 'animate-spin' : ''}`} />
-                    {syncStatus || 'Sync'}
+                    <WiCloudRefresh className={`w-4 h-4 ${isLoading || accountsLoading ? "animate-spin" : ""}`} />
+                    {syncStatus || "Sync"}
                   </button>
                   <button
                     onClick={handleLogout}
@@ -266,85 +316,13 @@ const Navbar = () => {
             </div>
           )}
         </div>
-
-        <div
-          className="relative"
-          ref={languageMenuRef}
-        >
-          <button
-            onClick={toggleLanguageMenu}
-            className="flex shadow-sm items-center text-foreground gap-2 border border-foreground/20 hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
-          >
-            <BsTranslate className="w-3 h-3" />
-            <HiChevronDown className={`w-3 h-3 transition-transform ${isLanguageMenuOpen ? "rotate-180" : ""}`} />
-          </button>
-
-          {isLanguageMenuOpen && (
-            <div className="absolute top-full right-0 mt-1 bg-sidebar border border-border rounded-md shadow-lg py-1 z-50 min-w-[120px]">
-              <button
-                onClick={() => handleLanguageSelect("English")}
-                className={`flex flex-row gap-1 items-center w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer ${
-                  selectedLanguage === "English" ? "text-green-500" : "text-foreground"
-                }`}
-              >
-                English
-                <p className="text-[9px] opacity-40">[en_US]</p>
-              </button>
-              <button
-                onClick={() => handleLanguageSelect("Português")}
-                className={`flex flex-row gap-1 items-center w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer ${
-                  selectedLanguage === "Português" ? "text-green-500" : "text-foreground"
-                }`}
-              >
-                Português
-                <p className="text-[9px] opacity-40">[pt_BR]</p>
-              </button>
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={toggleTheme}
-          className="flex shadow-sm items-center text-foreground gap-2 border-1 border-foreground/20 hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
-          title={`Alternar para modo ${theme === "dark" ? "claro" : "escuro"}`}
-        >
-          {theme === "dark" ? <HiSun className="w-3 h-3" /> : <HiMoon className="w-3 h-3" />}
-        </button>
-
-        <button
-          onClick={() => setIsSettingsModalOpen(true)}
-          className="flex shadow-sm items-center text-foreground gap-2 border border-foreground/20 hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors"
-        >
-          <PiGearBold className="w-3 h-3" />
-        </button>
-
-        <div className="flex flex-row gap-2 items-center border border-foreground/20 rounded-md py-0.5">
-          <button
-            onClick={handleMinimizeApp}
-            className="flex items-center text-foreground gap-2 p-2 hover:cursor-pointer hover:bg-background/50 rounded-md transition-all"
-          >
-            <MdMinimize className="w-3 h-3 " />
-          </button>
-          <button
-            onClick={handleMaximizeApp}
-            className="flex items-center text-foreground gap-2 p-2 hover:cursor-pointer hover:bg-background/50 rounded-md transition-all"
-          >
-            <LuMaximize2 className="w-3 h-3" />
-          </button>
-          <button
-            onClick={handleCloseApp}
-            className="flex items-center text-foreground gap-2 p-2 hover:cursor-pointer hover:bg-red-600 rounded-md transition-all"
-          >
-            <IoMdClose className="w-3 h-3" />
-          </button>
-        </div>
       </div>
 
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
       />
-      
+
       <OverwriteConfirmationModal
         isOpen={isSyncModalOpen}
         onClose={handleCancelSync}

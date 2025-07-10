@@ -180,7 +180,7 @@ function App(): React.JSX.Element {
           <div className="bg-background min-h-screen flex flex-col relative">
             <Navbar />
 
-            <div className="flex-1 flex flex-col items-center justify-start px-5 pt-20 pb-80">
+            <div className="flex-1 flex flex-col items-center justify-start px-5 pt-15 pb-80">
               {accounts.length === 0 ? (
                 <>
                   <h1 className="text-4xl font-bold text-primary">Welcome!</h1>
