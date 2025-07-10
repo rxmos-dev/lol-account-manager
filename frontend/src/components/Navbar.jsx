@@ -190,16 +190,6 @@ const Navbar = () => {
       </div>
 
       <div className="flex items-center justify-between gap-2 no-drag">
-        <button
-          onClick={handleSyncWithFirebase}
-          disabled={isLoading || accountsLoading || !user}
-          className="flex shadow-sm border items-center text-foreground gap-2 border-foreground/20 hover:bg-sidebar/80 p-2 hover:cursor-pointer rounded-md transition-colors disabled:opacity-50"
-          title={syncStatus || (user ? "Sync with Firebase" : "Login to sync")}
-        >
-          <WiCloudRefresh className={`w-4 h-4 ${(isLoading || accountsLoading) ? 'animate-spin' : ''}`} />
-          <span className="text-xs font-normal">{syncStatus || 'Sync'}</span>
-        </button>
-
         <div
           className="relative"
           ref={authMenuRef}
@@ -238,6 +228,14 @@ const Navbar = () => {
                       </div>
                     </div>
                   </div>
+                  <button
+                    onClick={handleSyncWithFirebase}
+                    disabled={isLoading || accountsLoading}
+                    className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer text-foreground disabled:opacity-50"
+                  >
+                    <WiCloudRefresh className={`w-4 h-4 ${(isLoading || accountsLoading) ? 'animate-spin' : ''}`} />
+                    {syncStatus || 'Sync'}
+                  </button>
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs font-medium hover:bg-sidebar/80 transition-colors hover:cursor-pointer text-foreground"

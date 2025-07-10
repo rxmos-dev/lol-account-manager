@@ -15,7 +15,6 @@ interface GridCardProps {
 const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, isLoadingElo }) => {
   const { getChampionNameById, getChampionIcon } = useChampion();
 
-  // Função para verificar se os dados estão atualizados (últimas 24h)
   const isDataFresh = () => {
     if (!account.lastUpdated) return false;
     const now = Date.now();
@@ -35,14 +34,22 @@ const GridCard: React.FC<GridCardProps> = ({ account, index, onClick, ahriIcon, 
       onClick={() => onClick(account)}
       className={`bg-secondary border-b-5 rounded-lg shadow-md p-6 justify-center items-center max-w-xs w-50 h-70 flex flex-col hover:cursor-pointer hover:border-b-0 transition-all duration-50 relative ${getTierBorderColor(
         formatEloData(account.eloData).tier
-      )}`}
+      )} ${account.isLoading ? "opacity-60" : ""}`}
     >
-      {/* Indicador de cache */}
+      {account.isLoading && (
+        <div className="absolute inset-0 bg-secondary/90 rounded-lg flex items-center justify-center z-10">
+          <div className="flex flex-col items-center gap-2">
+            <TbLoader2 className="animate-spin w-8 h-8 text-primary" />
+            <span className="text-xs text-primary">Loading data...</span>
+          </div>
+        </div>
+      )}
+
       {account.lastUpdated && (
         <div className="absolute top-2 right-2">
           <div
             className={`w-2 h-2 rounded-full ${isDataFresh() ? "bg-green-400" : "bg-yellow-400"}`}
-            title={`Dados ${isDataFresh() ? "atualizados" : "desatualizados"} - ${getHoursFromUpdate()}h atrás`}
+            title={`Data ${isDataFresh() ? "updated" : "outdated"} - ${getHoursFromUpdate()}h ago`}
           />
         </div>
       )}

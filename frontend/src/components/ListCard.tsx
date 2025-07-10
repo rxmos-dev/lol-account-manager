@@ -17,7 +17,6 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
 
   const eloInfo = formatEloData(account.eloData);
 
-  // Função para verificar se os dados estão atualizados (últimas 24h)
   const isDataFresh = () => {
     if (!account.lastUpdated) return false;
     const now = Date.now();
@@ -37,14 +36,22 @@ const ListCard: React.FC<ListCardProps> = ({ account, index, onClick, ahriIcon, 
       onClick={() => onClick(account)}
       className={`bg-secondary border-l-5 rounded-lg shadow-md py-3 px-5 w-full flex flex-row items-center justify-between hover:cursor-pointer hover:border-l-0 transition-all duration-50 relative ${getTierBorderColor(
         eloInfo.tier
-      )}`}
+      )} ${account.isLoading ? 'opacity-60' : ''}`}
     >
-      {/* Indicador de cache */}
+      {account.isLoading && (
+        <div className="absolute inset-0 bg-secondary/90 rounded-lg flex items-center justify-center z-10">
+          <div className="flex flex-col items-center gap-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="text-xs text-primary">Loading account data...</span>
+          </div>
+        </div>
+      )}
+
       {account.lastUpdated && (
         <div className="absolute top-3 right-3">
           <div
             className={`w-2 h-2 rounded-full ${isDataFresh() ? "bg-green-400" : "bg-yellow-400"}`}
-            title={`Dados ${isDataFresh() ? "atualizados" : "desatualizados"} - ${getHoursFromUpdate()}h atrás`}
+            title={`Data ${isDataFresh() ? "updated" : "outdated"} - ${getHoursFromUpdate()}h ago`}
           />
         </div>
       )}

@@ -26,11 +26,12 @@ interface AccountData {
   password: string;
   summonerName: string;
   tagline: string;
-  puuid?: string; // Adicionando campo opcional para PUUID
-  eloData?: any; // Adicionando campo opcional para dados de elo
-  championMasteriesData?: ChampionMastery[]; // Adicionando campo opcional para maestrias de campeões
-  summonerLaneData?: SummonerLaneData; // Adicionando campo opcional para dados de lane principal
-  lastUpdated?: number; // Timestamp da última atualização dos dados da API
+  puuid?: string;
+  eloData?: any;
+  championMasteriesData?: ChampionMastery[];
+  summonerLaneData?: SummonerLaneData;
+  lastUpdated?: number;
+  isLoading?: boolean;
 }
 
 // Constantes de configuração

@@ -42,6 +42,7 @@ function App(): React.JSX.Element {
     forceUpdateAll,
     syncWithFirebase,
     forceUploadToFirebase,
+    setAccounts,
   } = useAccounts();
 
   const { 
@@ -70,11 +71,14 @@ function App(): React.JSX.Element {
   const handleAddAccount = async (accountData: AccountData) => {
     setIsAddingAccount(true);
     try {
+      setAccounts((prev: AccountData[]) => [...prev, { ...accountData, isLoading: true }]);
+      closeAddModal();
+      
       await addAccount(accountData);
-      loadInitialAccounts(); // Recarrega as contas
-      closeAddModal(); // Fecha o modal
+      loadInitialAccounts();
     } catch (error) {
       console.error("Error adding account:", error);
+      setAccounts((prev: AccountData[]) => prev.filter((acc: AccountData) => acc.username !== accountData.username));
     } finally {
       setIsAddingAccount(false);
     }
